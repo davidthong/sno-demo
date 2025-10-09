@@ -4,5 +4,3 @@ username: "{{ SN_USERNAME }}"
 password: "{{ SN_PASSWORD }}"
 table: cmdb_ci_computer
 strict: false
-columns:
-  - name
