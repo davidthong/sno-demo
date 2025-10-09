@@ -5,7 +5,7 @@
   sources:
     - name: servicenow_change_source
       ansible.eda.servicenow:
-        instance: https://your-instance.service-now.com
+        instance: https://ven05427.service-now.com
         username: "{{ SN_USERNAME }}"
         password: "{{ SN_PASSWORD }}"
         table: change_request
