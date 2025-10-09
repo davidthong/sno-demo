@@ -3,7 +3,6 @@ host: https://ven05427.service-now.com
 username: "{{ SN_USERNAME }}"
 password: "{{ SN_PASSWORD }}"
 table: cmdb_ci_computer
+strict: false
 columns:
   - name
-  - host_name
-  - ip_address
