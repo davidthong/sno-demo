@@ -1,8 +1,8 @@
 # inventories/servicenow_inventory.yml
 plugin: servicenow.itsm.now
-instance: "{{ SN_INSTANCE }}"
-username: "{{ SN_USERNAME }}"
-password: "{{ SN_PASSWORD }}"
+#instance: "{{ SN_INSTANCE }}"
+#username: "{{ SN_USERNAME }}"
+#password: "{{ SN_PASSWORD }}"
 table: cmdb_ci_computer
 #query: "asset_tagSTARTSWITHdthong"     # Only pull hosts tagged with your prefix
 fields:
