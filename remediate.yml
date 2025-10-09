@@ -1,4 +1,4 @@
-- name: Stop Service Test 
+- name: Remediate SNOW Demo 
   hosts: '{{ cmdb_host }}'
   
   tasks:
