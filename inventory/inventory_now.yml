@@ -1,3 +1,14 @@
 plugin: servicenow.itsm.now
+instance: https://ven05427.service-now.com
+username: "{{ SN_USERNAME }}"
+password: "{{ SN_PASSWORD }}"
 table: cmdb_ci_computer
-#query: "asset_tagSTARTSWITHdthong"     # Only pull hosts tagged with your prefix
+fields:
+  - name
+  - ip_address
+  - os
+  - manufacturer
+host_field: name
+keyed_groups:
+  - prefix: sn
+    key: os
