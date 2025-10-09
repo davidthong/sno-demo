@@ -1,5 +1,5 @@
 plugin: servicenow.itsm.now
-instance: https://ven05427.service-now.com
+host: https://ven05427.service-now.com
 username: "{{ SN_USERNAME }}"
 password: "{{ SN_PASSWORD }}"
 table: cmdb_ci_computer
