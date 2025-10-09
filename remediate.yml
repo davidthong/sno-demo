@@ -1,0 +1,8 @@
+- name: Stop Service Test 
+  hosts: '{{ cmdb_host }}'
+  
+  tasks:
+
+     - name: Ping
+       ansible.builtin.ping:
+  
