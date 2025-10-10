@@ -19,7 +19,10 @@
 
   rules:
     - name: Launch AAP job when scheduled change detected
-      condition: event.state.display_value == "Scheduled"
+      condition: event.state is defined and (
+                   (event.state.display_value is defined and event.state.display_value == "Scheduled")
+                   or (event.state == "Scheduled")
+                 )
       action:
         run_job_template:
           name: "Remediate SNOW Demo"
@@ -34,10 +37,4 @@
       condition: event is defined
       action:
         debug:
-          msg: >
-            [DEBUG] SNOW event received:
-            number={{ event.number }},
-            state={{ event.state.display_value | default(event.state) }},
-            cmdb_ci={{ event.cmdb_ci.display_value | default('N/A') }},
-            updated_on={{ event.sys_updated_on | default('N/A') }},
-            description={{ event.short_description | default('No description') }}
+          var: event
