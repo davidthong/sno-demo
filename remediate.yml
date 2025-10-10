@@ -1,5 +1,5 @@
 ---
-- name: Remediate SNOW Demo - Stop plexmediaserver service
+- name: Remediate SNOW Demo - Stop service
   hosts: "{{ target_host }}"
   vars:
      target_service: plexmediaserver
