@@ -21,7 +21,7 @@
     - name: Launch AAP job when scheduled change detected
       condition: event.state is defined and event.state == "-2"
       action:
-        run_worflow_template:
+        run_workflow_template:
           name: "SNOW Remediation Demo - Workflow To Stop Service"
           organization: "Default"
           job_args:
