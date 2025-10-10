@@ -22,8 +22,8 @@
       servicenow.itsm.change_request:
         instance:
            host: "{{ sn_host }}"
-           username: "{{ SN_USERNAME }}"
-           password: "{{ SN_PASSWORD }}"
+           username: "{{ lookup('env', 'SN_USERNAME') }}"
+           password: "{{ lookup('env', 'SN_PASSWORD') }}"
         state: closed
         close_code: "successful"
         close_notes: "Closed"
