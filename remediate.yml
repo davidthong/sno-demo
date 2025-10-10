@@ -3,6 +3,7 @@
   hosts: "{{ target_host }}"
   vars:
      target_service: plexmediaserver
+     sn_host: https://ven05427.service-now.com
   become: true
   tasks:
     - name: Stop target service
@@ -19,6 +20,10 @@
     
     - name: Close change_request
       servicenow.itsm.change_request:
+        instance:
+           host: "{{ sn_host }}"
+           username: "{{ SN_USERNAME }}"
+           password: "{{ SN_PASSWORD }}"
         state: closed
         close_code: "successful"
         close_notes: "Closed"
