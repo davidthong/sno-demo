@@ -1,8 +1,19 @@
-- name: Remediate SNOW Demo 
+- name: Remediate SNOW Demo - Stop plexmediaserver service
   hosts: '{{ cmdb_host }}'
   
   tasks:
 
-     - name: Ping
-       ansible.builtin.ping:
+    - name: Lookup CI name from sys_id
+      servicenow.itsm.record_info:
+        instance:
+          host: "{{ SN_HOST }}"
+          username: "{{ SN_USERNAME }}"
+          password: "{{ SN_PASSWORD }}"
+          validate_certs: false
+        table: cmdb_ci_computer
+        sys_id: "{{ cmdb_sys_id }}"
+      register: ci_info
+
+
+    - ansible.builtin.debug: var=ci_info
   
