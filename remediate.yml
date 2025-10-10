@@ -1,40 +1,6 @@
 ---
 - name: Remediate SNOW Demo - Stop plexmediaserver service
-  hosts: localhost
-  
-  tasks:
-   
-    - ansible.builtin.debug: var=cmdb_sys_id
-
-    - name: Lookup CI name from sys_id
-      servicenow.itsm.configuration_item_info:
-        sys_id: "{{ cmdb_sys_id }}"
-      register: ci_info
-
-    - ansible.builtin.debug: 
-          msg: "{{ ci_info.records[0].name }}"
-
-    - name: Set dynamic target host
-      ansible.builtin.set_stats:
-         data:
-            target_host: "{{ ci_info.records[0].name | lower }}"
-            cr_number: "{{ ch_request_id }}"
-
----
-
-- name: Dynamically create inventory in memory
-  hosts: localhost
-  tasks:        
-  
-    - name: Add "{{ target_host }}" to in-memory inventory
-      add_host:
-        name: "{{ target_host }}"
-        groups: dynamic_target
-
-
-
-- name: Stop service on "{{ target_host }}"
-  hosts: dynamic_target
+  hosts: "{{ target_host }}"
   vars:
      target_service: plexmediaserver
   become: true
@@ -44,7 +10,6 @@
         name: "{{ target_service }}"
         state: stopped
      
-
     - name: Confirm service stopped
       ansible.builtin.shell: systemctl is-active {{ target_service }}
       register: status
