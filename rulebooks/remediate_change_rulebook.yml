@@ -21,8 +21,8 @@
     - name: Launch AAP job when scheduled change detected
       condition: event.state is defined and event.state == "-2"
       action:
-        run_job_template:
-          name: "Remediate SNOW Demo - Stop plexmediaserver service"
+        run_worflow_template:
+          name: "SNOW Remediation Demo - Workflow To Stop Service"
           organization: "Default"
           job_args:
             extra_vars:
