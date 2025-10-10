@@ -15,12 +15,11 @@
       register: status
       failed_when: false
 
-    - ansible.builtin.debug: var=cr_number
+    - ansible.builtin.debug: var=ch_request_id
     
-
-    # - name: Close change_request
-    #   servicenow.itsm.change_request:
-    #    state: closed
-    #    close_code: "successful"
-    #    close_notes: "Closed"
-    #    number: CHG0000001
+    - name: Close change_request
+      servicenow.itsm.change_request:
+       state: closed
+       close_code: "successful"
+       close_notes: "Closed"
+       number: "{{ ch_request_id }}"
