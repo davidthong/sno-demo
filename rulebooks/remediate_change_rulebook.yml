@@ -28,4 +28,3 @@
             extra_vars:
               cmdb_sys_id: "{{ event.cmdb_ci }}"
               ch_request_id: "{{ event.number }}"
-              target_host: ""
