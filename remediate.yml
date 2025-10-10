@@ -3,30 +3,51 @@
   hosts: "{{ target_host }}"
   vars:
      target_service: plexmediaserver
-     sn_host: https://ven05427.service-now.com
   become: true
   tasks:
-    - name: Stop target service
-      ansible.builtin.service:
-        name: "{{ target_service }}"
-        state: stopped
-     
-    - name: Confirm service stopped
-      ansible.builtin.shell: systemctl is-active {{ target_service }}
-      register: status
-      failed_when: false
 
-    - ansible.builtin.debug: var=ch_request_id
-    
-    - name: Close change_request
+    - name: Change CR state to implement before running task
       servicenow.itsm.change_request:
         instance:
            host: "{{ lookup('env', 'SN_HOST') }}"
            username: "{{ lookup('env', 'SN_USERNAME') }}"
            password: "{{ lookup('env', 'SN_PASSWORD') }}"
         state: Implement
-       # close_code: "successful"
-        #close_notes: "Closed"
+        number: "{{ ch_request_id }}"
+      delegate_to: localhost
+
+    - name: Stop target service
+      ansible.builtin.service:
+        name: "{{ target_service }}"
+        state: stopped
+     
+    - ansible.builtin.debug: var=ch_request_id
+    
+    - name: Implement change_request to stop service
+      servicenow.itsm.change_request:
+        instance:
+           host: "{{ lookup('env', 'SN_HOST') }}"
+           username: "{{ lookup('env', 'SN_USERNAME') }}"
+           password: "{{ lookup('env', 'SN_PASSWORD') }}"
+        state: Review
+        number: "{{ ch_request_id }}"
+      delegate_to: localhost
+
+    
+    - name: Confirm service stopped
+      ansible.builtin.shell: systemctl is-active {{ target_service }}
+      register: status
+      failed_when: false
+
+    - name: Close the CR, update the state and add notes.
+      servicenow.itsm.change_request:
+        instance:
+           host: "{{ lookup('env', 'SN_HOST') }}"
+           username: "{{ lookup('env', 'SN_USERNAME') }}"
+           password: "{{ lookup('env', 'SN_PASSWORD') }}"
+        state: Closed
+        close_code: "successful"
+        close_notes: "Closed. {{ target_service }} was stopped successfully"
         number: "{{ ch_request_id }}"
       delegate_to: localhost
       
