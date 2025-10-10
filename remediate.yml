@@ -25,12 +25,14 @@
 
 - name: Stop service 
   hosts: dynamic_target
+  vars:
+     target_service: plexmediaserver
   gather_facts: true
   become: true
   tasks:
     - name: Stop target service
       ansible.builtin.service:
-        name: plexmediaserver
+        name: "{{ target_service }}"
         state: stopped
      
 
