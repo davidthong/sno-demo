@@ -3,33 +3,25 @@
   hosts: all
 
   sources:
-    - name: servicenow_change_source
-      ansible.eda.servicenow:
-        instance: https://ven05427.service-now.com
-        username: "{{ SN_USERNAME }}"
-        password: "{{ SN_PASSWORD }}"
-        table: change_request
-        interval: 60
-        query: "state=3^cmdb_ciISNOTEMPTY"
-        fields:
-          - number
-          - state
-          - short_description
-          - cmdb_ci
-          - sys_id
-          - start_date
-          - end_date
-
+    - name: Watch for new records
+      hosts: localhost
+      sources:
+        - name: Watch for updated change requests
+          servicenow.itsm.records:
+            instance:
+              host: https://ven05427.service-now.com
+            table: change_request
+            interval: 10
+          sysparm_query: "state=Scheduled"
+            
   rules:
     - name: Launch AAP job when scheduled change detected
-      condition: event.data.state == "3" and event.data.cmdb_ci is not none
+      condition: event.state == "Scheduled"
       action:
         run_job_template:
           name: "Remediate SNOW Demo"
           organization: "Default"
           job_args:
             extra_vars:
-              change_number: "{{ event.data.number }}"
-              ci_name: "{{ event.data.cmdb_ci.name | default('unknown') }}"
-              ci_sys_id: "{{ event.data.cmdb_ci.sys_id | default('') }}"
-              description: "{{ event.data.short_description }}"
+              cmbd_host: "plexserver.lan"
+
