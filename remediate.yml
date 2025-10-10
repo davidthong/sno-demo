@@ -24,7 +24,7 @@
            host: "{{ lookup('env', 'SN_HOST') }}"
            username: "{{ lookup('env', 'SN_USERNAME') }}"
            password: "{{ lookup('env', 'SN_PASSWORD') }}"
-        state: implemented
+        state: Implement
        # close_code: "successful"
         #close_notes: "Closed"
         number: "{{ ch_request_id }}"
