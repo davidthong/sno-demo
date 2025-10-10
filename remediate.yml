@@ -3,6 +3,8 @@
   hosts: localhost
   
   tasks:
+   
+    - ansible.builtin.debug: var=cmdb_sys_id
 
     - name: Lookup CI name from sys_id
       servicenow.itsm.configuration_item_info:
