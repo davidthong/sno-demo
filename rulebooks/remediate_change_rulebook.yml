@@ -6,7 +6,7 @@
     - name: Watch for updated change requests
       servicenow.itsm.records:
         instance:
-          host: https://ven05427.service-now.com
+          host: "{{ SN_HOST }}"
           username: "{{ SN_USERNAME }}"
           password: "{{ SN_PASSWORD }}"
           validate_certs: false
