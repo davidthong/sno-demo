@@ -18,22 +18,23 @@
       set_fact:
         target_host: "{{ ci_info.records[0].name | lower }}"
     
-    - name: Add resolved host to in-memory inventory
+    - name: Add "{{ target_host }}" to in-memory inventory
       add_host:
         name: "{{ target_host }}"
         groups: dynamic_target
 
-- name: Stop service on "{{ target_host }}"
+- name: Stop service 
   hosts: dynamic_target
-  gather_facts: false
+  gather_facts: true
+  become: true
   tasks:
     - name: Stop target service
       ansible.builtin.service:
         name: plexmediaserver
         state: stopped
+     
 
     - name: Confirm service stopped
       ansible.builtin.shell: systemctl is-active {{ target_service }}
       register: status
       failed_when: false
-      
