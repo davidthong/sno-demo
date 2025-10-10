@@ -11,6 +11,8 @@
         sys_id: "{{ cmdb_sys_id }}"
       register: ci_info
 
+    
 
-    - ansible.builtin.debug: var=ci_info
+    - ansible.builtin.debug: 
+          msg: "{{ ci_info.records[0].name }}"
   
