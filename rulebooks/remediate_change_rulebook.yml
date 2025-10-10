@@ -6,7 +6,7 @@
     - name: Watch for scheduled change requests post approval
       servicenow.itsm.records:
         instance:
-          host: https://ven05427.service-now.com
+          host: "{{ SN_HOST }}"
           username: "{{ SN_USERNAME }}"
           password: "{{ SN_PASSWORD }}"
           validate_certs: false
@@ -14,22 +14,18 @@
         interval: 10
         sysparm_query: "state=-2"
         updated_since: "2025-10-08 00:00:00"
+        custom_headers:
+          sysparm_display_value: true  # returns display_name fields like “Scheduled”
 
   rules:
     - name: Launch AAP job when scheduled change detected
-      condition: event.state is defined and event.state == "-2"
+      condition: event.state.display_value == "Scheduled"
       action:
         run_job_template:
           name: "Remediate SNOW Demo"
           organization: "Default"
           job_args:
             extra_vars:
-              cmdb_host: "{{ event.cmdb_ci | default('plexserver.lan') }}"
+              cmdb_host: "{{ event.cmdb_ci.display_value | default('plexserver.lan') }}"
               change_number: "{{ event.number }}"
               description: "{{ event.short_description | default('No description') }}"
-
-    # - name: Debug incoming change request event
-    #   condition: event is defined
-    #   action:
-    #     debug:
-    #       var: event
