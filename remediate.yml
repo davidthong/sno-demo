@@ -6,10 +6,6 @@
 
     - name: Lookup CI name from sys_id
       servicenow.itsm.configuration_item_info:
-        instance:
-          username: "{{ SN_USERNAME }}"
-          password: "{{ SN_PASSWORD }}"
-          validate_certs: false
         sys_id: "{{ cmdb_sys_id }}"
       register: ci_info
 
