@@ -19,7 +19,9 @@
     
     - name: Close change_request
       servicenow.itsm.change_request:
-       state: closed
-       close_code: "successful"
-       close_notes: "Closed"
-       number: "{{ ch_request_id }}"
+        state: closed
+        close_code: "successful"
+        close_notes: "Closed"
+        number: "{{ ch_request_id }}"
+      delegate_to: localhost
+      
