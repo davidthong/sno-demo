@@ -15,5 +15,6 @@
           msg: "{{ ci_info.records[0].name }}"
 
     - name: Persist host to workflow context
-      set_fact:
-          target_host: "{{ ci_info.records[0].name | lower }}"
+      set_stats:
+         data:
+            target_host: "{{ ci_info.records[0].name | lower }}"
