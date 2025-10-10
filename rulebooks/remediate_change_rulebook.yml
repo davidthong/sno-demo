@@ -16,6 +16,11 @@
         updated_since: "2025-10-09 00:00:00"
 
   rules:
+    - name: Debug incoming events
+      condition: event is defined
+      action:
+        debug:
+
     - name: Launch AAP job when scheduled change detected
       condition: event.state == "Scheduled"
       action:
