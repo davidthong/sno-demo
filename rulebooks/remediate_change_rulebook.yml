@@ -3,17 +3,18 @@
   hosts: all
 
   sources:
-    - name: Watch for new records
-      hosts: localhost
-      sources:
-        - name: Watch for updated change requests
-          servicenow.itsm.records:
-            instance:
-              host: https://ven05427.service-now.com
-            table: change_request
-            interval: 10
-          sysparm_query: "state=Scheduled"
-            
+    - name: Watch for updated change requests
+      servicenow.itsm.records:
+        instance:
+          host: https://ven05427.service-now.com
+          username: "{{ SN_USERNAME }}"
+          password: "{{ SN_PASSWORD }}"
+          validate_certs: false
+        table: change_request
+        interval: 10
+        sysparm_query: "state=Scheduled"
+        updated_since: "2025-10-09 00:00:00"
+
   rules:
     - name: Launch AAP job when scheduled change detected
       condition: event.state == "Scheduled"
@@ -23,5 +24,6 @@
           organization: "Default"
           job_args:
             extra_vars:
-              cmbd_host: "plexserver.lan"
-
+              cmdb_host: "{{ event.cmdb_ci.display_value | default('plexserver.lan') }}"
+              change_number: "{{ event.number }}"
+              description: "{{ event.short_description | default('No description') }}"
