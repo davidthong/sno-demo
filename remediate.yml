@@ -15,15 +15,18 @@
           msg: "{{ ci_info.records[0].name }}"
 
     - name: Set dynamic target host
-      set_fact:
-        target_host: "{{ ci_info.records[0].name | lower }}"
+      ansible.builtin.set_stats:
+         data:
+            target_host: "{{ ci_info.records[0].name | lower }}"
+            cr_number: "{{ ch_request_id }}"
+            
     
     - name: Add "{{ target_host }}" to in-memory inventory
       add_host:
         name: "{{ target_host }}"
         groups: dynamic_target
 
-- name: Stop service 
+- name: Stop service on "{{ target_host }}"
   hosts: dynamic_target
   vars:
      target_service: plexmediaserver
@@ -40,3 +43,13 @@
       ansible.builtin.shell: systemctl is-active {{ target_service }}
       register: status
       failed_when: false
+
+    - ansible.builtin.debug: var=cr_number
+    
+
+    # - name: Close change_request
+    #   servicenow.itsm.change_request:
+    #    state: closed
+    #    close_code: "successful"
+    #    close_notes: "Closed"
+    #    number: CHG0000001
