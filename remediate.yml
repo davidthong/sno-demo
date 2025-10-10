@@ -21,12 +21,12 @@
     - name: Close change_request
       servicenow.itsm.change_request:
         instance:
-           host: "{{ sn_host }}"
+           host: "{{ lookup('env', 'SN_HOST') }}"
            username: "{{ lookup('env', 'SN_USERNAME') }}"
            password: "{{ lookup('env', 'SN_PASSWORD') }}"
-        state: closed
-        close_code: "successful"
-        close_notes: "Closed"
+        state: implemented
+       # close_code: "successful"
+        #close_notes: "Closed"
         number: "{{ ch_request_id }}"
       delegate_to: localhost
       
