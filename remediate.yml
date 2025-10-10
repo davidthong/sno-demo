@@ -19,18 +19,23 @@
          data:
             target_host: "{{ ci_info.records[0].name | lower }}"
             cr_number: "{{ ch_request_id }}"
-            
-    
+
+
+- name: Dynamically create inventory in memory
+  hosts: localhost
+  tasks:        
+  
     - name: Add "{{ target_host }}" to in-memory inventory
       add_host:
         name: "{{ target_host }}"
         groups: dynamic_target
 
+
+
 - name: Stop service on "{{ target_host }}"
   hosts: dynamic_target
   vars:
      target_service: plexmediaserver
-  gather_facts: true
   become: true
   tasks:
     - name: Stop target service
