@@ -14,8 +14,6 @@
     - ansible.builtin.debug: 
           msg: "{{ ci_info.records[0].name }}"
 
-    - name: Set dynamic target host
-      ansible.builtin.set_fact:
-            target_host: "{{ ci_info.records[0].name | lower }}"
-       
-    
+    - name: Persist host to workflow context
+      set_fact:
+          target_host: "{{ ci_info.records[0].name | lower }}"
