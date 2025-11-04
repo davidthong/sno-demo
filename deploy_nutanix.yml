@@ -1,0 +1,36 @@
+---
+- name: Deploy Nutanix
+  hosts: localhost
+  tasks:
+
+
+    - name: Deploy Nutanix
+      ansible.builtin.debug:
+         msg: 
+            - "Calling Nutanix VM Deploy with these parameters"
+            - "Hostname --> {{ vm_hostname }}"
+
+    # - name: Create VM on Nutanix
+    #   nutanix.nutanix.nutanix_vm:
+    #     prism_host: "{{ nutanix_host }}"
+    #     prism_user: "{{ nutanix_username }}"
+    #     prism_password: "{{ nutanix_password }}"
+    #     validate_certs: false
+    #     state: present
+    #     name: "{{ vm_name }}"
+    #     cluster: "{{ cluster_name }}"
+    #     num_vcpus: "{{ tshirt_sizes[size].cpu }}"
+    #     num_cores_per_vcpu: 1
+    #     memory_gb: "{{ tshirt_sizes[size].ram_gb }}"
+    #     nics:
+    #       - network: "{{ network_name }}"
+    #     disks:
+    #       - size_gb: "{{ tshirt_sizes[size].storage_gb }}"
+    #         type: "DISK"
+    #         bus: "SCSI"
+    #     power_state: "on"
+    #   register: vm_result
+
+    # - name: Show VM deployment result
+    #   debug:
+    #     var: vm_result

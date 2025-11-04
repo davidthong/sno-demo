@@ -18,3 +18,4 @@
       set_stats:
          data:
             target_host: "{{ ci_info.records[0].name | lower }}"
+            

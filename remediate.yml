@@ -23,7 +23,7 @@
      
     - ansible.builtin.debug: var=ch_request_id
     
-    - name: Implement change_request to stop service
+    - name: Review change_request to stop service
       servicenow.itsm.change_request:
         instance:
            host: "{{ lookup('env', 'SN_HOST') }}"
