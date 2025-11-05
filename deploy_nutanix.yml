@@ -1,17 +1,22 @@
 ---
 - name: Deploy Nutanix
   hosts: localhost
+  vars_files:
+     - vars/sizing.yml
   tasks:
 
 
-    - name: Deploy Nutanix
+
+    - name: Deploy {{ vm_provider }}
       ansible.builtin.debug:
          msg: 
-            - "Calling Nutanix VM Deploy with these parameters"
+            - "Calling {{ vm_provider }} VM Deploy with these parameters"
             - "Hostname --> {{ vm_hostname }}"
             - "Size --> {{ vm_size }}"
-          #  - "Num CPU -- {{ tshirt_sizes[ {{vm_size }}]}}"
-            - "REQ ID --> {{ snow_req_id }}"
+            - "Number of CPU --> {{ tshirt_sizes[vm_size].cpu}}"
+            - "Memory --> {{ tshirt_sizes[vm_size].ram_gb}}"
+            - "Storage --> {{ tshirt_sizes[vm_size].storage_gb}}"
+            - "SNOW REQ ID --> {{ snow_req_id }}"
 
 
 
