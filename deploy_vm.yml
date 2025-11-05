@@ -6,7 +6,7 @@
   tasks:
 
     - name: Pip install depedencies for servicenow.snow_record. TODO , create execution environment
-      ansible.buitin.pip:
+      ansible.builtin.pip:
          name: 
             - pysnow
             - requests
