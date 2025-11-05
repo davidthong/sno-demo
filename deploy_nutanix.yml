@@ -1,11 +1,9 @@
 ---
-- name: Deploy Nutanix
+- name: Deploy VM
   hosts: localhost
   vars_files:
      - vars/sizing.yml
   tasks:
-
-
 
     - name: Deploy {{ vm_provider }}
       ansible.builtin.debug:
@@ -16,11 +14,10 @@
             - "Number of CPU --> {{ tshirt_sizes[vm_size].cpu}}"
             - "Memory --> {{ tshirt_sizes[vm_size].ram_gb}}"
             - "Storage --> {{ tshirt_sizes[vm_size].storage_gb}}"
-            - "SNOW REQ ID --> {{ snow_req_id }}"
+            - "SNOW REQ ID --> {{ snow_request_item_number }}"
 
-
-
-    # - name: Create VM on Nutanix
+    
+     # - name: Create VM on Nutanix
     #   nutanix.nutanix.nutanix_vm:
     #     prism_host: "{{ nutanix_host }}"
     #     prism_user: "{{ nutanix_username }}"
@@ -40,7 +37,29 @@
     #         bus: "SCSI"
     #     power_state: "on"
     #   register: vm_result
+    #   when: vm_provider is 'nutanix'
 
-    # - name: Show VM deployment result
-    #   debug:
-    #     var: vm_result
+
+    - name: Post-Provisioning Block
+      block:
+        - name: Calling VM Provisioning Role
+          ansible.builtin.debug:
+            msg: "..... Provisioning Complete"
+
+        - name: Set Provisioning Success Flag to true
+          ansible.builtin.set_fact:
+            vm_provisioning_success: true
+
+    
+    - name: Post a worknote and a comment on ticket# {{ snow_request_item_number }} when success
+      servicenow.servicenow.snow_record:
+        display_value: true
+        number: "{{ snow_request_item_number }}"
+        state: present
+        table: sc_req_item
+        data:
+          work_notes: "This worknote has been introduced by Ansible"
+          comments: "This has been provisioned using Ansible Autmation"
+          state: "Closed Completed"
+      when: vm_provisioning_success == true
+
