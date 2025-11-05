@@ -66,6 +66,6 @@
         data:
           work_notes: "This worknote has been introduced by Ansible"
           comments: "This has been provisioned using Ansible Autmation"
-          state: "Closed Completed"
+          state: 3
       when: vm_provisioning_success == true
 
