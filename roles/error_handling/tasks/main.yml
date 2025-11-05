@@ -1,0 +1,30 @@
+---
+# tasks file for error_handling
+
+ - name: Delete VM from Nutanix (example)
+   nutanix.nutanix.nutanix_vm:
+        prism_hostname: "{{ nutanix_host }}"
+        prism_username: "{{ nutanix_user }}"
+        prism_password: "{{ nutanix_pass }}"
+        validate_certs: false
+        state: absent
+        vm_name: "{{ vm_name }}"
+   register: vm_delete_result
+   ignore_errors: true
+
+ - name: Log deletion result
+   ansible.builtin.debug:
+    msg: "VM deletion result: {{ vm_delete_result }}"
+
+    # refer to : https://docs.ansible.com/ansible/latest/collections/infoblox/nios_modules/nios_fixed_address_module.html
+ - name: Release IP address from Infoblox
+   infoblox.nios_modules.nios_fixed_address:
+        host: "{{ infoblox_host }}"
+        username: "{{ infoblox_username }}"
+        password: "{{ infoblox_password }}"
+        network: "192.168.0.0/24"
+        ipaddr: "{{ vm_ip }}"
+        state: absent
+        validate_certs: false
+   delegate_to: localhost
+   register: release_result

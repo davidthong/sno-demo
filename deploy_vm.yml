@@ -70,8 +70,7 @@
             name: error_handling
           vars:
             error_context: "Post-Provisioning Block failed."
-
-
+            
       always:
         - name: Show final provisioning result
           ansible.builtin.debug:
