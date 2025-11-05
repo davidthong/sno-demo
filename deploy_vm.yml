@@ -5,6 +5,12 @@
      - vars/sizing.yml
   tasks:
 
+    - name: Pip install depedencies for servicenow.snow_record. TODO , create execution environment
+      ansible.buitin.pip:
+         name: 
+            - pysnow
+            - requests
+
     - name: Deploy {{ vm_provider }}
       ansible.builtin.debug:
          msg: 
