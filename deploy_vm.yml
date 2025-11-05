@@ -83,7 +83,7 @@
         state: present
         table: sc_req_item
         data:
-          work_notes: "Provisioning successful. Please refer to AAP job: {{ aap_job_url }}"
+          work_notes: "Provisioning complete. View job: [AAP Job #{{ aap_job_id }}]({{ aap_job_url }})"
           comments: "This has been provisioned using Ansible Automation"
           state: 3
       when: vm_provisioning_success == true
