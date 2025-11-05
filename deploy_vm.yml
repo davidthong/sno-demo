@@ -3,6 +3,10 @@
   hosts: localhost
   vars_files:
      - vars/sizing.yml
+     - vars/defaults.yml
+  vars:
+    aap_job_id: "{{ tower_job_id }}"
+    aap_job_url: "https://{{ aap24.dthong.com }}/#/jobs/playbook/{{ tower_job_id }}/output"
   tasks:
 
     - name: Pip install depedencies for servicenow.snow_record. TODO , create execution environment
@@ -56,7 +60,23 @@
           ansible.builtin.set_fact:
             vm_provisioning_success: true
 
-    
+      rescue:
+        - name: Log failure message
+          ansible.builtin.debug:
+            msg: "Provisioning failed — invoking error handling role."
+
+        - name: Call the error handling role
+          ansible.builtin.include_role:
+            name: error_handling
+          vars:
+            error_context: "Post-Provisioning Block failed."
+
+
+      always:
+        - name: Show final provisioning result
+          ansible.builtin.debug:
+            msg: "Provisioning success: {{ vm_provisioning_success | default(false) }}"
+
     - name: Post a worknote and a comment on ticket# {{ snow_request_item_number }} when success
       servicenow.servicenow.snow_record:
         display_value: true
@@ -65,12 +85,8 @@
         table: sc_req_item
         data:
           work_notes:
-             - "This worknote has been introduced by Ansible."
-             - "Hostname --> {{ vm_hostname }}"
-             - "Size --> {{ vm_size }}"
-             - "Number of CPU --> {{ tshirt_sizes[vm_size].cpu}}"
-             - "Memory --> {{ tshirt_sizes[vm_size].ram_gb}}"
-             - "Storage --> {{ tshirt_sizes[vm_size].storage_gb}}"
+             - "Provisioning successful. Please refer to AAP job {{ tower_job_id }} - {{ aap_job_url }}"
+       
           comments: "This has been provisioned using Ansible Automation"
           state: 3
       when: vm_provisioning_success == true
