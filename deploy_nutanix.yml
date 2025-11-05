@@ -9,6 +9,11 @@
          msg: 
             - "Calling Nutanix VM Deploy with these parameters"
             - "Hostname --> {{ vm_hostname }}"
+            - "Size --> {{ vm_size }}"
+          #  - "Num CPU -- {{ tshirt_sizes[ {{vm_size }}]}}"
+            - "REQ ID --> {{ snow_req_id }}"
+
+
 
     # - name: Create VM on Nutanix
     #   nutanix.nutanix.nutanix_vm:
