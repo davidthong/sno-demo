@@ -64,8 +64,15 @@
         state: present
         table: sc_req_item
         data:
-          work_notes: "This worknote has been introduced by Ansible"
-          comments: "This has been provisioned using Ansible Autmation"
+          work_notes:
+             - "This worknote has been introduced by Ansible."
+             - "Hostname --> {{ vm_hostname }}"
+             - "Size --> {{ vm_size }}"
+             - "Number of CPU --> {{ tshirt_sizes[vm_size].cpu}}"
+             - "Memory --> {{ tshirt_sizes[vm_size].ram_gb}}"
+             - "Storage --> {{ tshirt_sizes[vm_size].storage_gb}}"
+             - "SNOW REQ ID --> {{ snow_request_item_number }}"
+          comments: "This has been provisioned using Ansible Automation"
           state: 3
       when: vm_provisioning_success == true
 
