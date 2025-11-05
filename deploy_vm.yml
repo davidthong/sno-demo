@@ -6,7 +6,7 @@
      - vars/defaults.yml
   vars:
     aap_job_id: "{{ tower_job_id }}"
-    aap_job_url: "https://{{ aap24.dthong.com }}/#/jobs/playbook/{{ tower_job_id }}/output"
+    aap_job_url: "https://{{ aap_controller_hostname }}/#/jobs/playbook/{{ tower_job_id }}/output"
   tasks:
 
     - name: Pip install depedencies for servicenow.snow_record. TODO , create execution environment
