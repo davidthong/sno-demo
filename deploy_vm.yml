@@ -71,7 +71,6 @@
              - "Number of CPU --> {{ tshirt_sizes[vm_size].cpu}}"
              - "Memory --> {{ tshirt_sizes[vm_size].ram_gb}}"
              - "Storage --> {{ tshirt_sizes[vm_size].storage_gb}}"
-             - "SNOW REQ ID --> {{ snow_request_item_number }}"
           comments: "This has been provisioned using Ansible Automation"
           state: 3
       when: vm_provisioning_success == true
