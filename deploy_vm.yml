@@ -1,33 +1,35 @@
 ---
 - name: Deploy VM
   hosts: localhost
+  connection: local
+  gather_facts: false
   vars_files:
-     - vars/sizing.yml
-     - vars/defaults.yml
+    - vars/sizing.yml
+    - vars/defaults.yml
   vars:
     aap_job_id: "{{ tower_job_id }}"
     aap_job_url: "https://{{ aap_controller_hostname }}/#/jobs/playbook/{{ tower_job_id }}/output"
   tasks:
 
-    - name: Pip install depedencies for servicenow.snow_record. TODO , create execution environment
+    - name: Pip install dependencies for servicenow.snow_record.
       ansible.builtin.pip:
-         name: 
-            - pysnow
-            - requests
+        name:
+          - pysnow
+          - requests
 
     - name: Deploy {{ vm_provider }}
       ansible.builtin.debug:
-         msg: 
-            - "Calling {{ vm_provider }} VM Deploy with these parameters"
-            - "Hostname --> {{ vm_hostname }}"
-            - "Size --> {{ vm_size }}"
-            - "Number of CPU --> {{ tshirt_sizes[vm_size].cpu}}"
-            - "Memory --> {{ tshirt_sizes[vm_size].ram_gb}}"
-            - "Storage --> {{ tshirt_sizes[vm_size].storage_gb}}"
-            - "SNOW REQ ID --> {{ snow_request_item_number }}"
+        msg:
+          - "Calling {{ vm_provider }} VM Deploy with these parameters"
+          - "Hostname --> {{ vm_hostname }}"
+          - "Size --> {{ vm_size }}"
+          - "Number of CPU --> {{ tshirt_sizes[vm_size].cpu}}"
+          - "Memory --> {{ tshirt_sizes[vm_size].ram_gb}}"
+          - "Storage --> {{ tshirt_sizes[vm_size].storage_gb}}"
+          - "SNOW REQ ID --> {{ snow_request_item_number }}"
 
-    
-     # - name: Create VM on Nutanix
+
+    # - name: Create VM on Nutanix
     #   nutanix.nutanix.nutanix_vm:
     #     prism_host: "{{ nutanix_host }}"
     #     prism_user: "{{ nutanix_username }}"
@@ -46,8 +48,16 @@
     #         type: "DISK"
     #         bus: "SCSI"
     #     power_state: "on"
-    #   register: vm_result
     #   when: vm_provider is 'nutanix'
+    #   # --- START RETRY LOGIC ---
+    #   # This is the most important retry.
+    #   # It will attempt to create the VM 5 times, waiting 30 seconds between failures.
+    #   # This handles temporary API issues or resource contention on the hypervisor.
+    #   register: vm_result
+    #   until: vm_result.failed == false
+    #   retries: 5
+    #   delay: 30
+    #   # --- END RETRY LOGIC ---
 
 
     - name: Post-Provisioning Block
@@ -70,21 +80,25 @@
             name: error_handling
           vars:
             error_context: "Post-Provisioning Block failed."
-            
+
       always:
         - name: Show final provisioning result
           ansible.builtin.debug:
             msg: "Provisioning success: {{ vm_provisioning_success | default(false) }}"
 
     - name: Post a worknote and a comment on ticket# {{ snow_request_item_number }} when success
-      servicenow.servicenow.snow_record:
-        display_value: true
+      servicenow.itsm.requested_item:
         number: "{{ snow_request_item_number }}"
         state: present
-        table: sc_req_item
-        data:
-          work_notes: "Provisioning complete. View job: [AAP Job #{{ aap_job_id }}]({{ aap_job_url }})"
-          comments: "This has been provisioned using Ansible Automation"
-          state: 3
+        work_notes: "Provisioning complete. View job: [AAP Job #{{ aap_job_id }}]({{ aap_job_url }})"
+        additional_comments: "This has been provisioned using Ansible Automation"
+        state: 3
       when: vm_provisioning_success == true
-
+      # --- START RETRY LOGIC ---
+      # This retries the API call to ServiceNow in case of a temporary network issue.
+      register: snow_update_result
+      until: snow_update_result.failed == false
+      retries: 3
+      delay: 15
+      # --- END RETRY LOGIC ---
+      
