@@ -1,21 +1,35 @@
 ---
 - name: Create In Memory Inventory Group Based on CMDB
   hosts: localhost
+  gather_facts: false 
 
   tasks:
-   
-    - ansible.builtin.debug: var=cmdb_sys_id
+    - ansible.builtin.debug: 
+        var: cmdb_sys_id
 
     - name: Lookup CI name from sys_id
       servicenow.itsm.configuration_item_info:
         sys_id: "{{ cmdb_sys_id }}"
       register: ci_info
 
+    - name: Validate that a CI was actually found
+      ansible.builtin.assert:
+        that: ci_info.records | length > 0
+        fail_msg: "Could not find any CI in ServiceNow with sys_id: {{ cmdb_sys_id }}"
+
+    - name: Set fact for clean usage (optional but cleaner)
+      ansible.builtin.set_fact:
+        found_hostname: "{{ ci_info.records[0].name | lower | trim }}"
+
     - ansible.builtin.debug: 
-          msg: "{{ ci_info.records[0].name }}"
+        msg: "Found host: {{ found_hostname }}"
+
+    - name: Add host to in-memory inventory
+      ansible.builtin.add_host:
+        name: "{{ found_hostname }}"
+        groups: "target_group_from_cmdb"
 
     - name: Persist host to workflow context
-      set_stats:
-         data:
-            target_host: "{{ ci_info.records[0].name | lower }}"
-            
+      ansible.builtin.set_stats:
+        data:
+          target_host: "{{ found_hostname }}"
