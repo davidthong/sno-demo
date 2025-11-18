@@ -51,11 +51,10 @@
     #   when: vm_provider is 'nutanix'
     #   # --- START RETRY LOGIC ---
     #   # This is the most important retry.
-    #   # It will attempt to create the VM 5 times, waiting 30 seconds between failures.
-    #   # This handles temporary API issues or resource contention on the hypervisor.
+    #   # It will attempt to create the VM 3 times, waiting 60 seconds between failures.
     #   register: vm_result
     #   until: vm_result.failed == false
-    #   retries: 5
+    #   retries: 3
     #   delay: 60
     #   # --- END RETRY LOGIC ---
 
