@@ -68,8 +68,8 @@
         
         - name: Get tasks for that CR
           servicenow.itsm.change_task_info:
-          query:
-            change_request: "{{ cr_info.result.records[0].sys_id }}"
+             query:
+                change_request: "{{ cr_info.result.records[0].sys_id }}"
           register: cr_tasks
 
         - name: debug ctasks 
