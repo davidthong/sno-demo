@@ -86,6 +86,8 @@
              close_code: "successful"
              close_notes: "Closed with AAP job # {{ tower_job_id }}"
              number: "{{ provision_ctask_number }}"
+             other:
+                 work_notes: "Automated by AAP job ID: {{ tower_job_id }}"
           when: provision_ctask_number is defined
 
 
