@@ -63,6 +63,9 @@
              number: "{{ change_request_number }}"
           register: result
 
+        - name: debug result 
+          ansible.builtin.debug: var=result
+
         
 
       rescue:
