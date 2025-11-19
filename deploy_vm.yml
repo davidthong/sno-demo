@@ -7,9 +7,14 @@
   vars:
     aap_job_id: "{{ tower_job_id }}"
     aap_job_url: "https://{{ aap_controller_hostname }}/#/jobs/playbook/{{ tower_job_id }}/output"
+    provision_ctask_description: Automation - Provision
   tasks:
 
   
+    - name: Retrieve change requests by number
+      servicenow.itsm.change_request_info:
+         number: "{{ change_request_number }}"
+      register: cr_info
 
     - name: Deploy {{ vm_provider }}
       ansible.builtin.debug:
@@ -58,26 +63,19 @@
           ansible.builtin.set_fact:
             vm_provisioning_success: true
 
-        - name: Retrieve change requests by number
-          servicenow.itsm.change_request_info:
-             number: "{{ change_request_number }}"
-          register: cr_info
+  
 
         - name: debug result 
           ansible.builtin.debug: var=cr_info
         
-        - name: Get tasks for that CR
+        - name: Get CTask for 
           servicenow.itsm.change_request_task_info:
-             sysparm_query: "change_request={{ cr_info.records[0].sys_id }}"
-          register: cr_tasks
+             sysparm_query: "change_request={{ cr_info.result.records[0].sys_id }}^short_description={{ provision_ctask_description }}"
+          register: ctask_provision
 
-        # - name: get ctask 
-        #   servicenow.itsm.change_request_task_info:
-        #      number: CTASK0010340
-        #   register: cr_tasks
 
         - name: debug ctasks 
-          ansible.builtin.debug: var=cr_tasks
+          ansible.builtin.debug: var=ctask_provision
 
         
 
