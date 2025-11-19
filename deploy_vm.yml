@@ -75,7 +75,7 @@
         - name: get ctask 
           servicenow.itsm.change_request_task_info:
              number: CTASK0010340
-          resgister: cr_tasks
+          register: cr_tasks
 
         - name: debug ctasks 
           ansible.builtin.debug: var=cr_tasks
