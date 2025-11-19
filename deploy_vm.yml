@@ -9,11 +9,7 @@
     aap_job_url: "https://{{ aap_controller_hostname }}/#/jobs/playbook/{{ tower_job_id }}/output"
   tasks:
 
-    - name: Pip install depedencies for servicenow.snow_record. TODO , create execution environment
-      ansible.builtin.pip:
-         name: 
-            - pysnow
-            - requests
+  
 
     - name: Deploy {{ vm_provider }}
       ansible.builtin.debug:
@@ -25,6 +21,8 @@
             - "Memory --> {{ tshirt_sizes[vm_size].ram_gb}}"
             - "Storage --> {{ tshirt_sizes[vm_size].storage_gb}}"
             - "SNOW REQ ID --> {{ snow_request_item_number }}"
+            - "SNOW CHANGE RQUEST NUMBER "
+            
 
     
      # - name: Create VM on Nutanix
@@ -60,6 +58,13 @@
           ansible.builtin.set_fact:
             vm_provisioning_success: true
 
+        - name: Retrieve change requests by number
+          servicenow.itsm.change_request_info:
+             number: "{{ change_request_number }}"
+          register: result
+
+        
+
       rescue:
         - name: Log failure message
           ansible.builtin.debug:
@@ -76,15 +81,15 @@
           ansible.builtin.debug:
             msg: "Provisioning success: {{ vm_provisioning_success | default(false) }}"
 
-    - name: Post a worknote and a comment on ticket# {{ snow_request_item_number }} when success
-      servicenow.servicenow.snow_record:
-        display_value: true
-        number: "{{ snow_request_item_number }}"
-        state: present
-        table: sc_req_item
-        data:
-          work_notes: "Provisioning complete. View job: [AAP Job #{{ aap_job_id }}]({{ aap_job_url }})"
-          comments: "This has been provisioned using Ansible Automation"
-          state: 3
-      when: vm_provisioning_success == true
+    # - name: Post a worknote and a comment on ticket# {{ snow_request_item_number }} when success
+    #   servicenow.servicenow.snow_record:
+    #     display_value: true
+    #     number: "{{ snow_request_item_number }}"
+    #     state: present
+    #     table: sc_req_item
+    #     data:
+    #       work_notes: "Provisioning complete. View job: [AAP Job #{{ aap_job_id }}]({{ aap_job_url }})"
+    #       comments: "This has been provisioned using Ansible Automation"
+    #       state: 3
+    #   when: vm_provisioning_success == true
 
