@@ -70,7 +70,7 @@
         
         - name: Get CTask for 
           servicenow.itsm.change_request_task_info:
-             sysparm_query: "change_request={{ cr_info.result.records[0].sys_id }}^short_description={{ provision_ctask_description }}"
+             sysparm_query: "change_request={{ cr_info.records[0].sys_id }}^short_description={{ provision_ctask_description }}"
           register: ctask_provision
 
 
