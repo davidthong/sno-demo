@@ -67,7 +67,7 @@
           ansible.builtin.debug: var=cr_info
         
         - name: Get tasks for that CR
-          servicenow.itsm.change_task_info:
+          servicenow.itsm.change_request_task_info:
              query:
                 change_request: "{{ cr_info.result.records[0].sys_id }}"
           register: cr_tasks
