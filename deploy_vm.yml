@@ -66,11 +66,16 @@
         - name: debug result 
           ansible.builtin.debug: var=cr_info
         
-        - name: Get tasks for that CR
+        # - name: Get tasks for that CR
+        #   servicenow.itsm.change_request_task_info:
+        #      query:
+        #         - parent: "{{ cr_info.records[0].sys_id }}"
+        #   register: cr_tasks
+
+        - name: get ctask 
           servicenow.itsm.change_request_task_info:
-             query:
-                - parent: "{{ cr_info.records[0].sys_id }}"
-          register: cr_tasks
+             number: CTASK0010340
+          resgister: cr_tasks
 
         - name: debug ctasks 
           ansible.builtin.debug: var=cr_tasks
