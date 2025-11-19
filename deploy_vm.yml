@@ -10,6 +10,7 @@
     aap_job_id: "{{ tower_job_id }}"
     aap_job_url: "https://{{ aap_controller_hostname }}/#/jobs/playbook/{{ tower_job_id }}/output"
     cluster_uuid: "0005b559-ca0a-0609-4805-1c34da421254"
+    network_uuid: "0005b559-ca0a-0609-4805-1c34da421254"
   tasks:
 
     - name: Pip install dependencies for servicenow.snow_record.
