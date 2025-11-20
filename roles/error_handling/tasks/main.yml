@@ -1,16 +1,54 @@
 ---
 # tasks file for error_handling
 
- - name: Delete VM from Nutanix (example)
-   nutanix.nutanix.nutanix_vm:
-        prism_hostname: "{{ nutanix_host }}"
-        prism_username: "{{ nutanix_user }}"
-        prism_password: "{{ nutanix_pass }}"
-        validate_certs: false
-        state: absent
-        vm_name: "{{ vm_name }}"
+# - name: Delete VM from Nutanix (example)
+#   nutanix.nutanix.nutanix_vm:
+#        prism_hostname: "{{ nutanix_host }}"
+#        prism_username: "{{ nutanix_user }}"
+#        prism_password: "{{ nutanix_pass }}"
+#        validate_certs: false
+#        state: absent
+#        vm_name: "{{ vm_name }}"
+#   register: vm_delete_result
+#   ignore_errors: true
+
+ - name: Look up VM UUID by Name
+   ansible.builtin.uri:
+     url: "https://{{ nutanix_host }}:9440/api/nutanix/v3/vms/list"
+     method: POST
+     user: "{{ nutanix_user }}"
+     password: "{{ nutanix_pass }}"
+     validate_certs: false
+     force_basic_auth: true
+     status_code: 200
+     headers:
+       Content-Type: "application/json"
+     body_format: json
+     body:
+       kind: vm
+       filter: "vm_name=={{ vm_name }}"
+       length: 1
+   register: vm_lookup_result
+   delegate_to: localhost
+ 
+ - name: Set VM UUID as Fact
+   ansible.builtin.set_fact:
+     vm_uuid: "{{ vm_lookup_result.json.entities[0].metadata.uuid }}"
+   when: vm_lookup_result.json.entities | length > 0
+ 
+ - name: Delete VM from Nutanix via API
+   ansible.builtin.uri:
+     url: "https://{{ nutanix_host }}:9440/api/nutanix/v3/vms/{{ vm_uuid }}"
+     method: DELETE 
+     user: "{{ nutanix_user }}"
+     password: "{{ nutanix_pass }}"
+     validate_certs: false
+     force_basic_auth: true
+     status_code: [200, 202, 404] # Accept 200 (Success), 202 (Accepted/In-progress), or 404 (Already gone)
    register: vm_delete_result
-   ignore_errors: true
+   ignore_errors: true 
+   delegate_to: localhost
+   when: vm_uuid is defined
 
  - name: Log deletion result
    ansible.builtin.debug:
