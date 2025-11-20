@@ -8,10 +8,27 @@
     aap_job_id: "{{ tower_job_id }}"
     aap_job_url: "https://{{ aap_controller_hostname }}/#/jobs/playbook/{{ tower_job_id }}/output"
     provision_ctask_description: Automation - Provision
+    snow_grant_type: client_credentials
   tasks:
 
+    - name: Test raw token request
+      ansible.builtin.uri:
+         url: "{{ snow_host }}/oauth_token.do"
+         method: POST
+         body_format: form-urlencoded
+         body:
+          grant_type: "{{ snow_grant_type }}"
+          client_id: "{{ snow_client_id }}"
+          client_secret: "{{ snow_client_secret }}"
+         return_content: true
+         status_code: 200,400,401
+      register: debug_token
+
+    - debug:
+      var: debug_token
+
   
-    - name: Retrieve change requests by number
+    - name: Retrieve change request by number
       servicenow.itsm.change_request_info:
          number: "{{ change_request_number }}"
       register: cr_info
@@ -68,7 +85,7 @@
         - name: debug result 
           ansible.builtin.debug: var=cr_info
         
-        - name: Get CTask for 
+        - name: Get CTask for provisioning
           servicenow.itsm.change_request_task_info:
              sysparm_query: "change_request={{ cr_info.records[0].sys_id }}^short_description={{ provision_ctask_description }}"
           register: ctask_provision
@@ -113,15 +130,5 @@
           ansible.builtin.debug:
             msg: "Provisioning success: {{ vm_provisioning_success | default(false) }}"
 
-    # - name: Post a worknote and a comment on ticket# {{ snow_request_item_number }} when success
-    #   servicenow.servicenow.snow_record:
-    #     display_value: true
-    #     number: "{{ snow_request_item_number }}"
-    #     state: present
-    #     table: sc_req_item
-    #     data:
-    #       work_notes: "Provisioning complete. View job: [AAP Job #{{ aap_job_id }}]({{ aap_job_url }})"
-    #       comments: "This has been provisioned using Ansible Automation"
-    #       state: 3
-    #   when: vm_provisioning_success == true
+
 
