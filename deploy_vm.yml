@@ -24,8 +24,7 @@
          status_code: 200,400,401
       register: debug_token
 
-    - debug:
-      var: debug_token
+    - debug: var=debug_token
 
   
     - name: Retrieve change request by number
