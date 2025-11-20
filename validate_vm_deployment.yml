@@ -2,104 +2,84 @@
 - name: Validate Deployment of VM
   hosts: localhost
   vars_files:
-     - vars/sizing.yml
-     - vars/defaults.yml
+    - vars/sizing.yml
+    - vars/defaults.yml
   vars:
     aap_job_id: "{{ tower_job_id }}"
     aap_job_url: "https://{{ aap_controller_hostname }}/#/jobs/playbook/{{ tower_job_id }}/output"
     validation_ctask_description: Automation Validation
   tasks:
-    - name: Retrieve change requests by number
+    - name: Retrieve change request by number
       servicenow.itsm.change_request_info:
-         number: "{{ change_request_number }}"
+        number: "{{ change_request_number }}"
       register: cr_info
+
+    - name: Get CTask for Automation Provisioning Validation
+      servicenow.itsm.change_request_task_info:
+        sysparm_query: "change_request={{ cr_info.records[0].sys_id }}^short_description={{ validation_ctask_description }}"
+      register: ctask_validation
+
+    - name: Set validation_ctask_number fact
+      ansible.builtin.set_fact:
+        validation_ctask_number: "{{ ctask_validation.records[0].number }}"
+      when:
+        - ctask_validation.records | length > 0
+        - ctask_validation.records[0].state == 'open'
 
     - name: Validate Deployment for  {{ vm_provider }}
       ansible.builtin.debug:
-         msg: 
-            - "Validating {{ vm_provider }} VM Deploy with these parameters"
-            - "Hostname --> {{ vm_hostname }}"
-            - "Size --> {{ vm_size }}"
-            - "Number of CPU --> {{ tshirt_sizes[vm_size].cpu}}"
-            - "Memory --> {{ tshirt_sizes[vm_size].ram_gb}}"
-            - "Storage --> {{ tshirt_sizes[vm_size].storage_gb}}"
-            - "SNOW REQ ID --> {{ snow_request_item_number }}"
-            - "SNOW CHANGE RQUEST NUMBER --> {{ change_request_number }} "
+        msg:
+          - "Validating {{ vm_provider }} VM Deploy with these parameters"
+          - "Hostname --> {{ vm_hostname }}"
+          - "Size --> {{ vm_size }}"
+          - "Number of CPU --> {{ tshirt_sizes[vm_size].cpu}}"
+          - "Memory --> {{ tshirt_sizes[vm_size].ram_gb}}"
+          - "Storage --> {{ tshirt_sizes[vm_size].storage_gb}}"
+          - "SNOW REQ ID --> {{ snow_request_item_number }}"
+          - "SNOW CHANGE RQUEST NUMBER --> {{ change_request_number }} "
             
     # Block of tasks or role to validate VM provisioning
- #   - block:
- #       - name: Set Provisioning Validation Success Flag to true
- #         ansible.builtin.set_fact:
- #           vm_validation_success: true
- #     rescue:
- #       - name: Set Provisioning Validation Success Flag to true
- #         ansible.builtin.set_fact:
- #           vm_validation_success: false
- #       - name: Log failure message
- #         ansible.builtin.debug:
- #           msg: "Validation failed — invoking error handling role."
- #       - name: Call the error handling role
- #         ansible.builtin.include_role:
- #           name: error_handling
- #         vars:
- #           error_context: "Validation Block failed."
- #     always:
-
-
-
-    - name: Successful Validation Block
+    - name: Provisioning Validation Block
       block:
-        - name: Get CTask for Validation
-          servicenow.itsm.change_request_task_info:
-             sysparm_query: "change_request={{ cr_info.records[0].sys_id }}^short_description={{ validation_ctask_description }}"
-          register: ctask_validation
-
-        - name: Set validation_ctask_sys_id fact
+        # Perform all provisioning validation tasks
+        # If all provisioning validation tasks are executed without error set vm_validation_success to trye
+        # and update change request CTask
+        - name: Set Provisioning Validation Success Flag to true
           ansible.builtin.set_fact:
-                validation_ctask_number: "{{ ctask_validation.records[0].number }}"
-          when:
-            - ctask_validation.records | length > 0
-            - ctask_validation.records[0].state == 'open'
+            vm_validation_success: true
 
-        - name: Close a validation change task
+        - name: Close the Automation Provisioning Validation CTask
           servicenow.itsm.change_request_task:
-             state: closed
-             close_code: "successful"
-             close_notes: "Closed with AAP job # {{ tower_job_id }}"
-             number: "{{ validation_ctask_number }}"
-             other:
-                 work_notes: "Automated by AAP job ID: {{ tower_job_id }}"
-          when: validation_ctask_number is defined
-        - name: debug ctasks 
-          ansible.builtin.debug: var=ctask_validation
-      when: vm_validation_success == true
-
-    - name: Failed Validation Block
-      block:
-        - name: Get CTask for Validation
-          servicenow.itsm.change_request_task_info:
-            sysparm_query: "change_request={{ cr_info.records[0].sys_id }}^short_description={{ validation_ctask_description }}"
-          register: ctask_validation
-
-        - name: Set validation_ctask_sys_id fact
-          ansible.builtin.set_fact:
-            validation_ctask_number: "{{ ctask_validation.records[0].number }}"
-          when:
-            - ctask_validation.records | length > 0
-            - ctask_validation.records[0].state == 'open'
-
-        - name: Cancel a validation change task
-          servicenow.itsm.change_request_task:
-            state: canceled
-            close_code: "canceled"
-            close_notes: "Task canceled by AAP job # {{ tower_job_id }}"
+            state: closed
+            close_code: "successful"
+            close_notes: "Closed with AAP job # {{ tower_job_id }}"
             number: "{{ validation_ctask_number }}"
             other:
-              work_notes: "Validation of Automated Provisioning Failed. Validation performed by AAP job ID: {{ tower_job_id }}"
+              work_notes: "Automated by AAP job ID: {{ tower_job_id }}"
           when: validation_ctask_number is defined
-        - name: debug ctasks
-          ansible.builtin.debug: var=ctask_validation
-      when: vm_validation_success == false
+
+        - name: debug for Automation Provisioning Validation ctask
+          ansible.builtin.debug:
+            var: ctask_validation
+      rescue:
+        - name: Set Provisioning Validation Success Flag to false
+          ansible.builtin.set_fact:
+            vm_validation_success: false
+        - name: Log failure message
+          ansible.builtin.debug:
+            msg: "Provisioning Validation failed — invoking error handling role."
+        - name: Call the error handling role
+          ansible.builtin.include_role:
+            name: error_handling
+          vars:
+            error_context: "Validation Block failed."
+            change_request_number: "{{ change_request_number }}"
+            validation_ctask_number: "{{ validation_ctask_number }}"
+            failed_stage: validation
+      always:
+        - name: Show final provisioning validation result
+          ansible.builtin.debug:
+            msg: "Provisioning Validation success: {{ vm_validation_success | default(false) }}"
 
     # - name: Post a worknote and a comment on ticket# {{ snow_request_item_number }} when success
     #   servicenow.servicenow.snow_record:
