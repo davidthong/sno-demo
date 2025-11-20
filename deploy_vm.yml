@@ -10,7 +10,6 @@
     aap_job_id: "{{ tower_job_id }}"
     aap_job_url: "https://{{ aap_controller_hostname }}/#/jobs/playbook/{{ tower_job_id }}/output"
     cluster_uuid: "0005b559-ca0a-0609-4805-1c34da421254"
-    network_uuid: "0005b559-ca0a-0609-4805-1c34da421254"
   tasks:
 
     - name: Pip install dependencies for servicenow.snow_record.
@@ -23,7 +22,7 @@
       ansible.builtin.debug:
         msg:
           - "Calling {{ vm_provider }} VM Deploy with these parameters"
-          - "Hostname --> {{ vm_hostname }}"
+          - "Hostname --> {{ vm_name }}"
           - "Size --> {{ vm_size }}"
           - "Number of CPU --> {{ tshirt_sizes[vm_size].cpu}}"
           - "Memory --> {{ tshirt_sizes[vm_size].ram_gb}}"
@@ -59,6 +58,36 @@
     #   retries: 3
     #   delay: 60
     #   # --- END RETRY LOGIC ---
+
+    - name: Look up UUID for Network/Subnet Name
+      ansible.builtin.uri:
+        url: "https://{{ nutanix_host }}:9440/api/nutanix/v3/subnets/list"
+        method: POST
+        user: "{{ nutanix_username }}"
+        password: "{{ nutanix_password }}"
+        validate_certs: false
+        force_basic_auth: true
+        status_code: 200
+        headers:
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          kind: subnet
+          filter: "name=={{ network_name }}" # Filter by the subnet name
+          # Limit results to 1 since names should be unique in the scope you are searching
+          length: 1 
+      register: subnet_lookup_result
+      delegate_to: localhost # Run this on the controller node
+    
+    - name: Set Network UUID as Fact
+      ansible.builtin.set_fact:
+        # Safely extract the UUID from the first item found in the 'entities' list
+        network_uuid: "{{ subnet_lookup_result.json.entities[0].metadata.uuid }}"
+      when: subnet_lookup_result.json.entities | length > 0
+   
+    - name: Display network UUID
+      ansible.builtin.debug:
+        msg: "network UUID: {{ network_uuid }}"
 
     - name: Create VM on Nutanix via API
       ansible.builtin.uri:
