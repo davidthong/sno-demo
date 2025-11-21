@@ -82,10 +82,35 @@
             msg: "Provisioning Validation success: {{ vm_validation_success | default(false) }}"
 
         # Thinking RITM work notes and etc should be updated only after validation has succeeded.
-        # Also, the below module is not from the itsm collection. I have looked at the itsm
+        # Also, the below commented out module is not from the itsm collection. I have looked at the itsm
         # collection documentation for a module that would update the RITM but did not see desired module.
-        # We may have to use the itsm api module to make an api call to update the RITM.
-        # I did find an example that creates a RITM using the api but looking at how to update the RITM with the api.
+        # We have to use the itsm api modules to make an api call to update the RITM.
+        # I think the following might work, needs tested of course
+
+        - name: Retrieve sys_id for RITM {{ snow_request_item_number }}
+          servicenow.itsm.api_info:
+            resource: sc_req_item
+            sysparm_query: "number={{ snow_request_item_number }}"
+            display_value: "true"
+            exclude_reference_link: true
+            columns:
+              - state
+              - number
+              - sys_id
+            query_no_domain: true
+            no_count: false
+          register: ritm_info
+          when: vm_validation_success == true
+
+        - name: Post a worknote and a comment on ticket# {{ snow_request_item_number }} when success
+          servicenow.itsm.api:
+            resource: sc_req_item
+            action: patch
+            sys_id: "{{ ritm_info.sys_id }}"
+            data:
+              work_notes: "Provisioning complete. View job: [AAP Job #{{ aap_job_id }}]({{ aap_job_url }})"
+              comments: "This has been provisioned using Ansible Automation"
+          when: vm_validation_success == true
 
 #        - name: Post a worknote and a comment on ticket# {{ snow_request_item_number }} when success
 #          servicenow.servicenow.snow_record:
