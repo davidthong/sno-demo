@@ -58,7 +58,7 @@
               work_notes: "Automated by AAP job ID: {{ tower_job_id }}"
           when: validation_ctask_number is defined
 
-        - name: debug for Automation Provisioning Validation ctask
+        - name: debug for Automation Provisioning Validation CTask
           ansible.builtin.debug:
             var: ctask_validation
       rescue:
@@ -75,21 +75,26 @@
             error_context: "Validation Block failed."
             change_request_number: "{{ change_request_number }}"
             validation_ctask_number: "{{ validation_ctask_number }}"
-            failed_stage: validation
+            failed_stage: "validation"
       always:
         - name: Show final provisioning validation result
           ansible.builtin.debug:
             msg: "Provisioning Validation success: {{ vm_validation_success | default(false) }}"
 
-    # - name: Post a worknote and a comment on ticket# {{ snow_request_item_number }} when success
-    #   servicenow.servicenow.snow_record:
-    #     display_value: true
-    #     number: "{{ snow_request_item_number }}"
-    #     state: present
-    #     table: sc_req_item
-    #     data:
-    #       work_notes: "Provisioning complete. View job: [AAP Job #{{ aap_job_id }}]({{ aap_job_url }})"
-    #       comments: "This has been provisioned using Ansible Automation"
-    #       state: 3
-    #   when: vm_provisioning_success == true
+        # Thinking RITM work notes and etc should be updated only after validation has succeeded.
+        # Also, the below module is not from the itsm collection. I have looked at the itsm
+        # collection documentation for a module that would update the RITM but did not see desired module.
+        # We may have to use the itsm api module to make an api call to update the RITM.
+        # I did find an example that creates a RITM using the api but looking at how to update the RITM with the api.
+
+#        - name: Post a worknote and a comment on ticket# {{ snow_request_item_number }} when success
+#          servicenow.servicenow.snow_record:
+#            display_value: true
+#            number: "{{ snow_request_item_number }}"
+#            state: present
+#            table: sc_req_item
+#            data:
+#              work_notes: "Provisioning complete. View job: [AAP Job #{{ aap_job_id }}]({{ aap_job_url }})"
+#              comments: "This has been provisioned using Ansible Automation"
+#          when: vm_validation_success == true
 

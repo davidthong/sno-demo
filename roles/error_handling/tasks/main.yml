@@ -31,16 +31,33 @@
 
 - name: Failed Provisioning Block
   block:
-    - name: Cancel a provision change task
+    - name: Cancel Automation Provisioning CTask
       servicenow.itsm.change_request_task:
         state: canceled
-        close_code: "canceled"
-        close_notes: "Task canceled by AAP job # {{ tower_job_id }}"
         number: "{{ provision_ctask_number }}"
         other:
-          work_notes: "Automated Provisioning Failed. Automated Provisioning performed by AAP job ID: {{ tower_job_id }}"
+          work_notes: "Automated Provisioning Failed. 
+          Automated Provisioning performed by AAP job ID: {{ tower_job_id }}.
+          The output of the AAP job can be seen at {{ aap_job_url }}"
       when: provision_ctask_number is defined
-    - name: debug ctasks
+
+     # Should the change request be closed or moved to review when CTask fails?
+    - name: Close change_request
+      servicenow.itsm.change_request:
+        instance:
+          host: https://instance_id.service-now.com
+          username: user
+          password: pass
+
+        state: closed
+        close_code: "unsuccessful"
+        close_notes: "{{ provision_ctask_description }} CTASK failed"
+        number: "{{ change_request_number }}"
+        other:
+          work_notes: "More details of why the change request is being closed.
+          Maybe list of failed APP tasks or the log output itself."
+
+    - name: debug Automation Provisioning CTask
       ansible.builtin.debug:
         var: ctask_provision
   when: failed_stage == "provisioning"
@@ -48,16 +65,34 @@
 
 - name: Failed Validation Block
   block:
-    - name: Cancel a validation change task
+    - name: Cancel Automation Provisioning Validation CTask
       servicenow.itsm.change_request_task:
         state: canceled
-        close_code: "canceled"
-        close_notes: "Task canceled by AAP job # {{ tower_job_id }}"
         number: "{{ validation_ctask_number }}"
         other:
-          work_notes: "Validation of Automated Provisioning Failed. Validation performed by AAP job ID: {{ tower_job_id }}"
+          work_notes: "Automated Provisioning Validation Failed. 
+          Automated Provisioning Validation performed by AAP job ID: {{ tower_job_id }}.
+          The output of the AAP job can be seen at {{ aap_job_url }}"
       when: validation_ctask_number is defined
-    - name: debug ctasks
+
+    # Should the change request be closed or moved to review when CTask fails?
+    - name: Close change_request
+      servicenow.itsm.change_request:
+        instance:
+          host: https://instance_id.service-now.com
+          username: user
+          password: pass
+
+        state: closed
+        close_code: "unsuccessful"
+        close_notes: "{{ validation_ctask_description }} CTASK failed"
+        number: "{{ change_request_number }}"
+        other:
+          work_notes: "More details of why the change request is being closed.
+          Maybe list of failed APP tasks or the log output itself."
+
+
+    - name: debug Automation Provisioning Validation CTask
       ansible.builtin.debug:
         var: ctask_validation
   when: failed_stage == "validation"

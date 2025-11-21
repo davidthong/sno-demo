@@ -87,7 +87,7 @@
               work_notes: "Automated by AAP job ID: {{ tower_job_id }}"
           when: provision_ctask_number is defined
 
-        - name: debug for Automation Provisioning ctask
+        - name: debug for Automation Provisioning CTask
           ansible.builtin.debug:
             var: ctask_provision
       rescue:
@@ -104,7 +104,7 @@
             error_context: "Post-Provisioning Block failed."
             change_request_number: "{{ change_request_number }}"
             provision_ctask_number: "{{ provision_ctask_number }}"
-            failed_stage: provisioning
+            failed_stage: "provisioning"
       always:
         - name: Show final provisioning result
           ansible.builtin.debug:
