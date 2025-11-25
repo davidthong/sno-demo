@@ -12,7 +12,6 @@
           validate_certs: false
         table: incident
         interval: 10
-        # state=1 (NEW), filter for short_description like "test"
         sysparm_query: "state=1^short_descriptionLIKEtest"
 
   rules:
@@ -21,7 +20,7 @@
         event.state is defined and
         event.state == "1" and
         event.short_description is defined and
-        ("test" in event.short_description | lower)
+        ("test" in (event.short_description | lower))
       action:
         run_workflow_template:
           name: "SNOW Remediation Demo - Workflow To Stop Service"
