@@ -1,0 +1,30 @@
+---
+- name: Implement CR
+  ansible.builtin.include_tasks: servicenow_implement.yml
+  when:
+    - servicenow_cr == "implement"
+
+- name: Close CR
+  ansible.builtin.include_tasks: servicenow_close_cr.yml
+  when:
+    - servicenow_cr == "close_cr"
+    - change_request_number is defined
+
+- name: Cancel CR
+  ansible.builtin.include_tasks: servicenow_canceled_cr.yml
+  when:
+    - servicenow_cr == "canceled_cr"
+    - change_request_number is defined
+
+- name: Close CR CTask
+  ansible.builtin.include_tasks: servicenow_close_ctask.yml
+  when:
+    - servicenow_cr == "close_ctask"
+    - change_request_number is defined
+
+- name: Cancel CR CTask
+  ansible.builtin.include_tasks: servicenow_canceled_ctask.yml
+  when:
+    - servicenow_cr == "canceled_ctask"
+    - change_request_number is defined
+

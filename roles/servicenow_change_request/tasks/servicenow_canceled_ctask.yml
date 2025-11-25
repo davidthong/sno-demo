@@ -1,0 +1,19 @@
+---
+- name: Get CTask By Description
+  ansible.builtin.include_tasks: servicenow_ctask_by_description.yml
+
+- name: Cancel {{ ctask_description }} CTask
+  servicenow.itsm.change_request_task:
+    state: canceled
+    number: "{{ ctask_number }}"
+    other:
+      work_notes: "{{ ctask_work_notes }}"
+#          work_notes: "Automated Provisioning Failed.
+#          Automated Provisioning performed by AAP job ID: {{ tower_job_id }}.
+#          The output of the AAP job can be seen at {{ aap_job_url }}"
+  delegate_to: localhost
+
+- name: Debug {{ ctask_description }} CTask
+  ansible.builtin.debug:
+    var: ctask_info
+  delegate_to: localhost

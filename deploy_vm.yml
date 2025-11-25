@@ -9,23 +9,6 @@
     aap_job_url: "https://{{ aap_controller_hostname }}/#/jobs/playbook/{{ tower_job_id }}/output"
     provision_ctask_description: Automation - Provision
   tasks:
-    - name: Retrieve change requests by number
-      servicenow.itsm.change_request_info:
-        number: "{{ change_request_number }}"
-      register: cr_info
-
-    - name: Get CTask for Automation Provisioning
-      servicenow.itsm.change_request_task_info:
-        sysparm_query: "change_request={{ cr_info.records[0].sys_id }}^short_description={{ provision_ctask_description }}"
-      register: ctask_provision
-
-    - name: Set provision_ctask_number fact
-      ansible.builtin.set_fact:
-        provision_ctask_number: "{{ ctask_provision.records[0].number }}"
-      when:
-        - ctask_provision.records | length > 0
-        - ctask_provision.records[0].state == 'open'
-
     - name: Deploy {{ vm_provider }}
       ansible.builtin.debug:
         msg:
@@ -73,23 +56,15 @@
           ansible.builtin.set_fact:
             vm_provisioning_success: true
 
-        - name: debug result 
-          ansible.builtin.debug:
-            var: cr_info
-
-        - name: Close the Automation Provisioning CTask
-          servicenow.itsm.change_request_task:
-            state: closed
-            close_code: "successful"
-            close_notes: "Closed with AAP job # {{ tower_job_id }}"
-            number: "{{ provision_ctask_number }}"
-            other:
-              work_notes: "Automated by AAP job ID: {{ tower_job_id }}"
-          when: provision_ctask_number is defined
-
-        - name: debug for Automation Provisioning CTask
-          ansible.builtin.debug:
-            var: ctask_provision
+          ansible.builtin.include_role:
+            name: servicenow_change_request
+          vare:
+            servicenow_cr: "close_ctask"
+            change_request_number: "{{ change_request_number }}"
+            ctask_close_code: "successful"
+            ctask_close_notes: "Closed with AAP job # {{ tower_job_id }}"
+            ctask_worknotes: "Automated by AAP job ID: {{ tower_job_id }}"
+            ctask_description: "{{ provision_ctask_description }}"
       rescue:
         - name: Log failure message
           ansible.builtin.debug:
@@ -103,8 +78,14 @@
           vars:
             error_context: "Post-Provisioning Block failed."
             change_request_number: "{{ change_request_number }}"
-            provision_ctask_number: "{{ provision_ctask_number }}"
-            failed_stage: "provisioning"
+        - name: Call ServiceNow Role to Cancel CTASK
+          ansible.builtin.include_role:
+            name: servicenow_change_request
+          vare:
+            servicenow_cr: "canceled_ctask"
+            change_request_number: "{{ change_request_number }}"
+            ctask_worknotes: "Automated Provisioning Failed. Automated Provisioning performed by AAP job ID: {{ tower_job_id }}. The output of the AAP job can be seen at {{ aap_job_url }}"
+            ctask_description: "{{ provision_ctask_description }}"
       always:
         - name: Show final provisioning result
           ansible.builtin.debug:
