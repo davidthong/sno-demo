@@ -16,11 +16,7 @@
 
   rules:
     - name: Launch workflow when NEW incident matches filter
-      condition: >
-        event.state is defined and
-        event.state == "1" and
-        event.short_description is defined and
-        ("test" in (event.short_description | lower))
+      condition: event.state is defined 
       action:
         run_workflow_template:
           name: "SNOW Remediation Demo - Workflow To Stop Service"
