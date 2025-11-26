@@ -89,6 +89,12 @@
       ansible.builtin.debug:
         msg: "network UUID: {{ network_uuid }}"
 
+    - name: Calculate and set integer facts for VM specs
+      ansible.builtin.set_fact:
+        vm_num_vcpus: "{{ tshirt_sizes[size].cpu | int }}"
+        vm_memory_mib: "{{ (tshirt_sizes[size].ram_gb * 1024) | int }}"
+        vm_disk_size_mib: "{{ (tshirt_sizes[size].storage_gb * 1024) | int }}"
+
     - name: Create VM on Nutanix via API
       ansible.builtin.uri:
         url: "https://{{ nutanix_host }}:9440/api/nutanix/v3/vms"
@@ -101,40 +107,7 @@
         headers:
           Content-Type: "application/json"
         body_format: json
-        body:
-          api_version: 3.0
-          metadata:
-            kind: vm
-            # The Nutanix API requires a unique identifier (UUID) for the cluster, 
-            # which needs to be looked up separately. For simplicity here, we assume 
-            # a variable containing the UUID is available.
-            cluster_reference:
-              kind: cluster
-              uuid: "{{ cluster_uuid }}" # Must use UUID, not name!
-          spec:
-            name: "{{ vm_name }}"
-            description: "Created by Ansible"
-            cluster_reference:
-              kind: cluster
-              uuid: "{{ cluster_uuid }}"
-            resources:
-              num_vcpus_per_socket: "{{ tshirt_sizes[size].cpu }}"
-              num_sockets: 1
-              memory_size_mib: "{{ (tshirt_sizes[size].ram_gb * 1024) | int }}" # Convert GB to MiB
-              nic_list:
-                - subnet_reference:
-                    kind: subnet
-                    # NOTE: This requires the UUID of the Network/Subnet, not the name.
-                    # You'll need a preceding lookup task to get this UUID.
-                    uuid: "{{ network_uuid }}" 
-              disk_list:
-                - disk_size_mib: "{{ (tshirt_sizes[size].storage_gb * 1024) | int }}" # Convert GB to MiB
-                  device_properties:
-                    disk_address:
-                      device_index: 0
-                      device_type: DISK
-                      adapter_type: SCSI
-              power_state: "ON"
+        body: "{{ lookup('template', 'vm_create_json.j2') }}"
       register: vm_result
     #  until: vm_result.failed == false
     #  retries: 3
