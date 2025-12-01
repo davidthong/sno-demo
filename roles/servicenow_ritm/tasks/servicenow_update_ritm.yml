@@ -10,6 +10,4 @@
     data:
       work_notes: "{{ ritm_work_notes }}"
       comments: "{{ ritm_comments }}"
-#      work_notes: "Provisioning complete. View job: [AAP Job #{{ aap_job_id }}]({{ aap_job_url }})"
-#      comments: "This has been provisioned using Ansible Automation"
   delegate_to: localhost

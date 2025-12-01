@@ -9,23 +9,6 @@
     aap_job_url: "https://{{ aap_controller_hostname }}/#/jobs/playbook/{{ tower_job_id }}/output"
     validation_ctask_description: Automation Validation
   tasks:
-    - name: Retrieve change request by number
-      servicenow.itsm.change_request_info:
-        number: "{{ change_request_number }}"
-      register: cr_info
-
-    - name: Get CTask for Automation Provisioning Validation
-      servicenow.itsm.change_request_task_info:
-        sysparm_query: "change_request={{ cr_info.records[0].sys_id }}^short_description={{ validation_ctask_description }}"
-      register: ctask_validation
-
-    - name: Set validation_ctask_number fact
-      ansible.builtin.set_fact:
-        validation_ctask_number: "{{ ctask_validation.records[0].number }}"
-      when:
-        - ctask_validation.records | length > 0
-        - ctask_validation.records[0].state == 'open'
-
     - name: Validate Deployment for  {{ vm_provider }}
       ansible.builtin.debug:
         msg:
@@ -48,19 +31,16 @@
           ansible.builtin.set_fact:
             vm_validation_success: true
 
-        - name: Close the Automation Provisioning Validation CTask
-          servicenow.itsm.change_request_task:
-            state: closed
-            close_code: "successful"
-            close_notes: "Closed with AAP job # {{ tower_job_id }}"
-            number: "{{ validation_ctask_number }}"
-            other:
-              work_notes: "Automated by AAP job ID: {{ tower_job_id }}"
-          when: validation_ctask_number is defined
-
-        - name: debug for Automation Provisioning Validation CTask
-          ansible.builtin.debug:
-            var: ctask_validation
+        - name: Call ServiceNow Role to Close CTASK
+          ansible.builtin.include_role:
+            name: servicenow_change_request
+          vare:
+            servicenow_cr: "close_ctask"
+            change_request_number: "{{ change_request_number }}"
+            ctask_close_code: "successful"
+            ctask_close_notes: "Closed with AAP job # {{ tower_job_id }}"
+            ctask_worknotes: "Validation Automated by AAP job ID: {{ tower_job_id }}"
+            ctask_description: "{{ validation_ctask_description }}"
       rescue:
         - name: Set Provisioning Validation Success Flag to false
           ansible.builtin.set_fact:
@@ -74,52 +54,28 @@
           vars:
             error_context: "Validation Block failed."
             change_request_number: "{{ change_request_number }}"
-            validation_ctask_number: "{{ validation_ctask_number }}"
-            failed_stage: "validation"
+        - name: Call ServiceNow Role to Cancel CTASK
+          ansible.builtin.include_role:
+            name: servicenow_change_request
+          vars:
+            servicenow_cr: "canceled_ctask"
+            change_request_number: "{{ change_request_number }}"
+            ctask_worknotes: "Validation of Automated Provisioning Failed. Automated Provisioning Validation performed by AAP job ID: {{ tower_job_id }}. 
+            The output of the AAP job can be seen at {{ aap_job_url }}"
+            ctask_description: "{{ validation_ctask_description }}"
       always:
         - name: Show final provisioning validation result
           ansible.builtin.debug:
             msg: "Provisioning Validation success: {{ vm_validation_success | default(false) }}"
 
         # Thinking RITM work notes and etc should be updated only after validation has succeeded.
-        # Also, the below commented out module is not from the itsm collection. I have looked at the itsm
-        # collection documentation for a module that would update the RITM but did not see desired module.
-        # We have to use the itsm api modules to make an api call to update the RITM.
-        # I think the following might work, needs tested of course
-
-        - name: Retrieve sys_id for RITM {{ snow_request_item_number }}
-          servicenow.itsm.api_info:
-            resource: sc_req_item
-            sysparm_query: "number={{ snow_request_item_number }}"
-            display_value: "true"
-            exclude_reference_link: true
-            columns:
-              - state
-              - number
-              - sys_id
-            query_no_domain: true
-            no_count: false
-          register: ritm_info
+        - name: Call ServiceNow Role to Update RITM
+          ansible.builtin.include_role:
+            name: servicenow_ritm
+          vars:
+            servicenow_ritm: "update"
+            snow_request_item_number: "{{ snow_request_item_number }}"
+            ritm_work_notes: "Provisioning complete. View job: [AAP Job #{{ aap_job_id }}]({{ aap_job_url }})"
+            ritm_comments: "This has been provisioned using Ansible Automation"
           when: vm_validation_success == true
-
-        - name: Post a worknote and a comment on ticket# {{ snow_request_item_number }} when success
-          servicenow.itsm.api:
-            resource: sc_req_item
-            action: patch
-            sys_id: "{{ ritm_info.sys_id }}"
-            data:
-              work_notes: "Provisioning complete. View job: [AAP Job #{{ aap_job_id }}]({{ aap_job_url }})"
-              comments: "This has been provisioned using Ansible Automation"
-          when: vm_validation_success == true
-
-#        - name: Post a worknote and a comment on ticket# {{ snow_request_item_number }} when success
-#          servicenow.servicenow.snow_record:
-#            display_value: true
-#            number: "{{ snow_request_item_number }}"
-#            state: present
-#            table: sc_req_item
-#            data:
-#              work_notes: "Provisioning complete. View job: [AAP Job #{{ aap_job_id }}]({{ aap_job_url }})"
-#              comments: "This has been provisioned using Ansible Automation"
-#          when: vm_validation_success == true
 

@@ -8,9 +8,6 @@
     number: "{{ ctask_number }}"
     other:
       work_notes: "{{ ctask_work_notes }}"
-#          work_notes: "Automated Provisioning Failed.
-#          Automated Provisioning performed by AAP job ID: {{ tower_job_id }}.
-#          The output of the AAP job can be seen at {{ aap_job_url }}"
   delegate_to: localhost
 
 - name: Debug {{ ctask_description }} CTask

@@ -56,9 +56,10 @@
           ansible.builtin.set_fact:
             vm_provisioning_success: true
 
+        - name: Call ServiceNow Role to Close CTASK
           ansible.builtin.include_role:
             name: servicenow_change_request
-          vare:
+          vars:
             servicenow_cr: "close_ctask"
             change_request_number: "{{ change_request_number }}"
             ctask_close_code: "successful"
@@ -81,10 +82,11 @@
         - name: Call ServiceNow Role to Cancel CTASK
           ansible.builtin.include_role:
             name: servicenow_change_request
-          vare:
+          vars:
             servicenow_cr: "canceled_ctask"
             change_request_number: "{{ change_request_number }}"
-            ctask_worknotes: "Automated Provisioning Failed. Automated Provisioning performed by AAP job ID: {{ tower_job_id }}. The output of the AAP job can be seen at {{ aap_job_url }}"
+            ctask_worknotes: "Automated Provisioning Failed. Automated Provisioning performed by AAP job ID: {{ tower_job_id }}. 
+            The output of the AAP job can be seen at {{ aap_job_url }}"
             ctask_description: "{{ provision_ctask_description }}"
       always:
         - name: Show final provisioning result
