@@ -19,12 +19,38 @@
       condition: event.state is defined
       actions:
 
+        # -----------------------------------------------------
+        # DEBUG: Detection Latency (in seconds)
+        # -----------------------------------------------------
         - debug:
             msg: >
-              DetectionLatencySeconds={{ (__import__('datetime').datetime.fromisoformat(event.meta.received_at.replace('Z','+00:00')) - __import__('datetime').datetime.strptime(event.sys_updated_on, "%Y-%m-%d %H:%M:%S")).total_seconds() }}
+              DetectionLatencySeconds={
+                {(
+                  (
+                    event.meta.received_at
+                      | replace('T',' ')
+                      | replace('Z','')
+                      | replace('-','')
+                      | replace(':','')
+                      | replace('.','')
+                      | int
+                  )
+                  -
+                  (
+                    event.sys_updated_on
+                      | replace(' ','')
+                      | replace('-','')
+                      | replace(':','')
+                      | int
+                  )
+                ) / 1000000
+              }}
               SNOW_UpdatedAt={{ event.sys_updated_on }}
               EDA_ReceivedAt={{ event.meta.received_at }}
 
+        # -----------------------------------------------------
+        # FIRE WORKFLOW
+        # -----------------------------------------------------
         - run_workflow_template:
             name: "SNOW Remediation Demo - Workflow To Stop Service"
             organization: "Default"
