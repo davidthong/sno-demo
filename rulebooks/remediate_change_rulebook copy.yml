@@ -19,36 +19,12 @@
       condition: event.state is defined
       actions:
 
-        # -----------------------------------------------------
-        # DEBUG: Compute real detection latency
-        # (EDA-safe: uses Python datetime inside Jinja)
-        # -----------------------------------------------------
         - debug:
             msg: >
-              DetectionLatencySeconds={{
-                (
-                  # Function that subtracts SNOW update time from EDA receive time
-                  lambda sys_time, recv_time:
-                    (
-                      __import__('datetime').datetime.fromisoformat(
-                        recv_time.replace('Z','+00:00')
-                      )
-                      -
-                      __import__('datetime').datetime.strptime(
-                        sys_time, "%Y-%m-%d %H:%M:%S"
-                      )
-                    ).total_seconds()
-                )(
-                  event.sys_updated_on,
-                  event.meta.received_at
-                )
-              }}
+              DetectionLatencySeconds={{ (__import__('datetime').datetime.fromisoformat(event.meta.received_at.replace('Z','+00:00')) - __import__('datetime').datetime.strptime(event.sys_updated_on, "%Y-%m-%d %H:%M:%S")).total_seconds() }}
               SNOW_UpdatedAt={{ event.sys_updated_on }}
               EDA_ReceivedAt={{ event.meta.received_at }}
 
-        # -----------------------------------------------------
-        # FIRE WORKFLOW
-        # -----------------------------------------------------
         - run_workflow_template:
             name: "SNOW Remediation Demo - Workflow To Stop Service"
             organization: "Default"
