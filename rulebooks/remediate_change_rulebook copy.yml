@@ -13,51 +13,23 @@
         table: incident
         interval: 10
         sysparm_query: "state=1^short_descriptionLIKEtest"
-        transformation: |
-          def transform(event):
-              import time
-              # Event already contains SNOW record fields
-              e = event.copy()
-              # Inject timing metadata
-              e["query_start_epoch"] = time.time()   # when poll begins
-              # SNOW API returned here — so this represents the end of the query
-              e["query_end_epoch"] = time.time()
-              # Raw query duration
-              e["query_duration"] = e["query_end_epoch"] - e["query_start_epoch"]
-              return e
-
 
   rules:
     - name: Launch workflow when NEW incident matches filter
       condition: event.state is defined
       actions:
 
-        # -----------------------------------------------------
-        # Debug: show SNOW query duration
-        # -----------------------------------------------------
         - debug:
             msg: >
-              SNOW Query Timing:
-              QueryStart={{ event.query_start_epoch }}
-              QueryEnd={{ event.query_end_epoch }}
-              QueryDurationSeconds={{ event.query_duration | round(3) }}
-
-        # -----------------------------------------------------
-        # Debug: detection latency (optional)
-        # -----------------------------------------------------
-        - debug:
-            msg: >
-              Detection Latency:
-              IncidentLastUpdated={{ event.sys_updated_on }}
+              Detection Metrics:
+              SNOW sys_updated_on={{ event.sys_updated_on }}
               Now={{ ansible_date_time.iso8601 }}
-              LatencySeconds={{
+              DetectionLatencySeconds={{
                 (ansible_date_time.epoch | int)
-                - (event.sys_updated_on_epoch | default(0) | int)
+                -
+                (event.sys_updated_on_epoch | int)
               }}
 
-        # -----------------------------------------------------
-        # Launch the workflow
-        # -----------------------------------------------------
         - run_workflow_template:
             name: "SNOW Remediation Demo - Workflow To Stop Service"
             organization: "Default"
