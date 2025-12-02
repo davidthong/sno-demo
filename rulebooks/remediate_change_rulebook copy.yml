@@ -23,11 +23,14 @@
             msg: >
               Detection Metrics:
               SNOW sys_updated_on={{ event.sys_updated_on }}
-              Now={{ ansible_date_time.iso8601 }}
+              Now={{ now() }}
               DetectionLatencySeconds={{
-                (ansible_date_time.epoch | int)
-                -
-                (event.sys_updated_on_epoch | int)
+                (
+                  (now() | to_datetime).timestamp() | int
+                ) -
+                (
+                  (event.sys_updated_on | to_datetime).timestamp() | int
+                )
               }}
 
         - run_workflow_template:
