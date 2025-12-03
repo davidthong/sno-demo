@@ -20,8 +20,8 @@
         servicenow_cr: "close_ctask"
         change_request_number: "{{ snow_change_request_number }}"
         ctask_close_code: "successful"
-        ctask_close_notes: "Closed with AAP job # {{ tower_job_id }}"
-        ctask_worknotes: "{{ rendered_notes.content }}"
+        ctask_close_notes: "Closed with AAP job # {{ job_id }}"
+        ctask_work_notes: "{{ rendered_notes.content }}"
         ctask_description: "{{ ctask_description }}"
       when:
         - snow_change_request_number is defined
@@ -33,7 +33,7 @@
       vars:
         servicenow_cr: "canceled_ctask"
         change_request_number: "{{ snow_change_request_number }}"
-        ctask_worknotes: "{{ rendered_notes.content }}"
+        ctask_work_notes: "{{ rendered_notes.content }}"
         ctask_description: "{{ ctask_description }}"
       when:
         - snow_change_request_number is defined
