@@ -1,19 +1,19 @@
 - name: Update ServiceNow
   hosts: localhost
-  gather_facts: false
+  gather_facts: true
   vars:
      aap_url: https://aap24.dthong.com
      job_id: 138
 
   tasks:
-
-     - name: Get job stdout in JSON format
-       ansible.builtin.uri:
-          url: "{{ aap_url }}/api/v2/jobs/{{ job_id }}/stdout/?format=json"
-          method: GET
-          user: "{{ credential.username }}"
-          password: "{{ credential.password }}"
-          force_basic_auth: true
-          validate_certs: false
-          return_content: true
-       register: job_json
+       - debug: controller_username
+    #  - name: Get job stdout in JSON format
+    #    ansible.builtin.uri:
+    #       url: "{{ aap_url }}/api/v2/jobs/{{ job_id }}/stdout/?format=json"
+    #       method: GET
+    #       user: "{{ credential.username }}"
+    #       password: "{{ credential.password }}"
+    #       force_basic_auth: true
+    #       validate_certs: false
+    #       return_content: true
+    #    register: job_json
