@@ -16,3 +16,6 @@
             validate_certs: false
             return_content: true
         register: job_json
+
+
+      - debug: var=job_json
