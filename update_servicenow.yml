@@ -5,6 +5,7 @@
   vars:
     aap_url: "https://aap24.dthong.com"
     job_id: 138
+    provision_ctask_number: CTASK0010344
 
   tasks:
 
@@ -57,8 +58,12 @@
           {% endfor %}
 
           (Generated automatically by AAP)
+    
+    - name: Close a change task
+      servicenow.itsm.change_request_task:
+         number: "{{ provision_ctask_number }}"
+         other:
+            work_notes: "Automated by AAP: {{ work_notes }}"
+            when: provision_ctask_number is defined
 
-    # Pretty-print work_notes so you can inspect formatting cleanly
-    - name: Display SNOW notes (pretty JSON)
-      debug:
-        msg: "{{ {'snow_notes': work_notes} | to_nice_json }}"
+ 
