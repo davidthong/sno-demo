@@ -21,3 +21,6 @@
   ansible.builtin.debug:
     msg: "Stub task 5 executed — workflow completed."
 
+
+- debug: var=tower_job_id
+
