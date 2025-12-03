@@ -33,6 +33,8 @@
       set_fact:
         clean_log: "{{ raw_log | regex_replace('\\x1b\\[[0-9;]*m', '') }}"
 
+    - debug: var=clean_log
+
     # 4. Extract TASK lines + ok/failed/changed lines
     - name: Extract structured task lines
       set_fact:
