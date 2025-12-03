@@ -1,0 +1,23 @@
+---
+# tasks file for vm_provision
+
+- name: Task 1 - Starting workflow
+  ansible.builtin.debug:
+    msg: "Stub task 1 executed — workflow started."
+
+- name: Task 2 - Validating inputs
+  ansible.builtin.debug:
+    msg: "Stub task 2 executed — inputs validated."
+
+- name: Task 3 - Pretending to configure system
+  ansible.builtin.debug:
+    msg: "Stub task 3 executed — no real configuration performed."
+
+- name: Task 4 - Simulating external API call
+  ansible.builtin.debug:
+    msg: "Stub task 4 executed — would normally call an API here."
+
+- name: Task 5 - Ending workflow
+  ansible.builtin.debug:
+    msg: "Stub task 5 executed — workflow completed."
+
