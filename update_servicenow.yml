@@ -6,14 +6,13 @@
      job_id: 138
 
   tasks:
-       - debug: var='{{lookup('env', 'AAP_API_USER')}}'
-    #  - name: Get job stdout in JSON format
-    #    ansible.builtin.uri:
-    #       url: "{{ aap_url }}/api/v2/jobs/{{ job_id }}/stdout/?format=json"
-    #       method: GET
-    #       user: "{{ credential.username }}"
-    #       password: "{{ credential.password }}"
-    #       force_basic_auth: true
-    #       validate_certs: false
-    #       return_content: true
-    #    register: job_json
+      - name: Get job stdout in JSON format
+        ansible.builtin.uri:
+            url: "{{ aap_url }}/api/v2/jobs/{{ job_id }}/stdout/?format=json"
+            method: GET
+            user: "{{ lookup('env', 'AAP_API_USER') }}"
+            password: "{{ lookup('env', 'AAP_API_PASS') }}"
+            force_basic_auth: true
+            validate_certs: false
+            return_content: true
+        register: job_json
