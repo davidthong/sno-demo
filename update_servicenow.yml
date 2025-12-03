@@ -27,11 +27,12 @@
       set_fact:
         clean_log: "{{ raw_log | regex_replace('\\x1b\\[[0-9;]*m', '') }}"
 
-    - name: Strip all control characters (critical fix)
+    - name: Strip control characters
       set_fact:
         clean_log: "{{ clean_log | regex_replace('[\\x00-\\x1F\\x7F]', '') }}"
 
-    - debug: var=clean_log
+    - debug:
+        var: clean_log
 
     - name: Extract structured task lines
       set_fact:
@@ -42,7 +43,8 @@
             | list
           }}
 
-    - debug: var=task_lines
+    - debug:
+        var: task_lines
 
     - name: Build SNOW work notes
       set_fact:
@@ -56,6 +58,7 @@
 
           (Generated automatically by AAP)
 
-    - name: Display formatted work notes
+    # Pretty-print work_notes so you can inspect formatting cleanly
+    - name: Display SNOW notes (pretty JSON)
       debug:
-        msg: "{{ work_notes }}"
+        msg: "{{ {'snow_notes': work_notes} | to_nice_json }}"
