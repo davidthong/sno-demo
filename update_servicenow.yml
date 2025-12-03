@@ -3,15 +3,11 @@
   gather_facts: false
 
   vars:
-    # AAP controller URL
     aap_url: "https://aap24.dthong.com"
-
-    # This can also be {{ tower_parent_job_id }}
     job_id: 138
 
   tasks:
 
-    # 1. Retrieve Ansible job results from AAP API
     - name: Get job stdout in JSON format
       ansible.builtin.uri:
         url: "{{ aap_url }}/api/v2/jobs/{{ job_id }}/stdout/?format=json"
@@ -23,31 +19,27 @@
         return_content: true
       register: job_json
 
-    # 2. Extract raw log text from JSON
     - name: Set raw log from API result
       ansible.builtin.set_fact:
         raw_log: "{{ job_json.json.content }}"
 
-    # 3. Remove ANSI escape sequences (\x1b[…m)
-    - name: Remove ANSI color codes from log
+    - name: Remove ANSI color codes
       set_fact:
         clean_log: "{{ raw_log | regex_replace('\\x1b\\[[0-9;]*m', '') }}"
 
     - debug: var=clean_log
 
-    # 4. Extract TASK lines + ok/failed/changed lines
     - name: Extract structured task lines
       set_fact:
         task_lines: >-
           {{
             clean_log.split('\n')
-            | select('match', '^(TASK \\b|ok:|failed:|changed:)')
+            | select('match', '^\\s*(TASK \\[|ok:|failed:|changed:)')
             | list
           }}
 
     - debug: var=task_lines
-    
-    # 5. Build a formatted ServiceNow work note
+
     - name: Build SNOW work notes
       set_fact:
         work_notes: |
@@ -60,7 +52,6 @@
 
           (Generated automatically by AAP)
 
-    # 6. Show final formatted work notes
     - name: Display formatted work notes
       debug:
         msg: "{{ work_notes }}"
