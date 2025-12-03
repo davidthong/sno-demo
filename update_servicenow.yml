@@ -6,7 +6,7 @@
      job_id: 138
 
   tasks:
-       - debug: var=lookup('env', 'AAP_API_USER')
+       - debug: var='{{lookup('env', 'AAP_API_USER')}}'
     #  - name: Get job stdout in JSON format
     #    ansible.builtin.uri:
     #       url: "{{ aap_url }}/api/v2/jobs/{{ job_id }}/stdout/?format=json"
