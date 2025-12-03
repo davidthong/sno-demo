@@ -17,3 +17,10 @@
 - name: Task 5 - Apply CIS Hardening
   ansible.builtin.debug:
     msg: "Stub task 5 executed — Apply CIS Hardening."
+
+- name: Set variables for workflow
+  set_stats:
+    data:
+      snow_action: "close_ctask"
+      ctask_description: "Automation - Provision"
+      job_id: "{{ tower_job_id }}"
