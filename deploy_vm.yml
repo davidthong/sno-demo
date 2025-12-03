@@ -10,7 +10,6 @@
     provision_ctask_description: Automation - Provision
     snow_grant_type: client_credentials
   tasks:
-
     - name: Test raw token request
       ansible.builtin.uri:
          url: "{{ snow_host }}/oauth_token.do"
@@ -26,12 +25,6 @@
 
     - debug: var=debug_token
 
-  
-    - name: Retrieve change request by number
-      servicenow.itsm.change_request_info:
-         number: "{{ change_request_number }}"
-      register: cr_info
-
     - name: Deploy {{ vm_provider }}
       ansible.builtin.debug:
         msg:
@@ -42,7 +35,7 @@
           - "Memory --> {{ tshirt_sizes[vm_size].ram_gb}}"
           - "Storage --> {{ tshirt_sizes[vm_size].storage_gb}}"
           - "SNOW REQ ID --> {{ snow_request_item_number }}"
-          - "SNOW CHANGE RQUEST NUMBER "
+          - "SNOW CHANGE RQUEST NUMBER --> {{ change_request_number }}"
 
     - name: Post-Provisioning Block
       block:
@@ -79,40 +72,16 @@
           ansible.builtin.set_fact:
             vm_provisioning_success: true
 
-  
-
-        - name: debug result 
-          ansible.builtin.debug: var=cr_info
-        
-        - name: Get CTask for provisioning
-          servicenow.itsm.change_request_task_info:
-             sysparm_query: "change_request={{ cr_info.records[0].sys_id }}^short_description={{ provision_ctask_description }}"
-          register: ctask_provision
-
-        - name: Set provision_ctask_sys_id fact
-          ansible.builtin.set_fact:
-                provision_ctask_number: "{{ ctask_provision.records[0].number }}"
-          when:
-            - ctask_provision.records | length > 0
-            - ctask_provision.records[0].state == 'open'
-
-        - name: Close a change task
-          servicenow.itsm.change_request_task:
-             state: closed
-             close_code: "successful"
-             close_notes: "Closed with AAP job # {{ tower_job_id }}"
-             number: "{{ provision_ctask_number }}"
-             other:
-                 work_notes: "Automated by AAP job ID: {{ tower_job_id }}"
-          when: provision_ctask_number is defined
-
-
-
-        - name: debug ctasks 
-          ansible.builtin.debug: var=ctask_provision
-
-        
-
+        - name: Call ServiceNow Role to Close CTASK
+          ansible.builtin.include_role:
+            name: servicenow_change_request
+            vars:
+              servicenow_cr: "close_ctask"
+              change_request_number: "{{ change_request_number }}"
+              ctask_close_code: "successful"
+              ctask_close_notes: "Closed with AAP job # {{ tower_job_id }}"
+              ctask_worknotes: "Automated by AAP job ID: {{ tower_job_id }}"
+              ctask_description: "{{ provision_ctask_description }}"
       rescue:
         - name: Log failure message
           ansible.builtin.debug:
