@@ -16,13 +16,13 @@
     - name: Call ServiceNow Role to Close CTASK
       ansible.builtin.include_role:
         name: servicenow_change_request
-        vars:
-          servicenow_cr: "close_ctask"
-          change_request_number: "{{ snow_change_request_number }}"
-          ctask_close_code: "successful"
-          ctask_close_notes: "Closed with AAP job # {{ tower_job_id }}"
-          ctask_worknotes: "{{ rendered_notes.content }}"
-          ctask_description: "{{ ctask_description }}"
+      vars:
+        servicenow_cr: "close_ctask"
+        change_request_number: "{{ snow_change_request_number }}"
+        ctask_close_code: "successful"
+        ctask_close_notes: "Closed with AAP job # {{ tower_job_id }}"
+        ctask_worknotes: "{{ rendered_notes.content }}"
+        ctask_description: "{{ ctask_description }}"
       when:
         - snow_change_request_number is defined
         - snow_action == "close_ctask"
