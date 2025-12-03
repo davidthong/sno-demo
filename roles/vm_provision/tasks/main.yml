@@ -1,0 +1,19 @@
+- name: Task 1 - Starting workflow
+  ansible.builtin.debug:
+    msg: "Stub task 1 executed — workflow started."
+
+- name: Task 2 - Join Satellite
+  ansible.builtin.debug:
+    msg: "Stub task 2 executed — Join Satellite."
+
+- name: Task 3 - Install Nimsoft Agent
+  ansible.builtin.debug:
+    msg: "Stub task 3 executed — agents ."
+
+- name: Task 4 - Install Splunk Agent
+  ansible.builtin.debug:
+    msg: "Stub task 4 executed — Install Splunk Agent."
+
+- name: Task 5 - Apply CIS Hardening
+  ansible.builtin.debug:
+    msg: "Stub task 5 executed — Apply CIS Hardening."

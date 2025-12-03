@@ -1,0 +1,9 @@
+Ansible Automation Summary:
+
+{% for item in task_names %}
+- {{ item }}
+{% endfor %}
+
+Link to AAP Job:
+
+{{ aap_url }}/#/jobs/playbook/{{ job_id }}/output

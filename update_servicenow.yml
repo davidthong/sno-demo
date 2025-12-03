@@ -1,0 +1,87 @@
+- name: Update ServiceNow
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    aap_url: "https://aap24.dthong.com"
+    provision_ctask_number: CTASK0010344
+
+  tasks:
+
+    - name: Get job stdout in JSON format
+      ansible.builtin.uri:
+        url: "{{ aap_url }}/api/v2/jobs/{{ job_id }}/stdout/?format=json"
+        method: GET
+        user: "{{ lookup('env', 'AAP_API_USER') }}"
+        password: "{{ lookup('env', 'AAP_API_PASS') }}"
+        force_basic_auth: true
+        validate_certs: false
+        return_content: true
+      register: job_json
+
+    - name: Set raw log from API result
+      set_fact:
+        raw_log: "{{ job_json.json.content }}"
+
+    - name: Remove ANSI color codes
+      set_fact:
+        clean_log: "{{ raw_log | regex_replace('\\x1b\\[[0-9;]*m', '') }}"
+
+    - name: Strip control characters
+      set_fact:
+        clean_log: "{{ clean_log | regex_replace('[\\x00-\\x1F\\x7F]', '') }}"
+
+    - debug:
+        var: clean_log
+
+    - name: Extract structured task lines
+      set_fact:
+        task_lines: >-
+          {{
+            clean_log.split('\n')
+            | select('match', '.*(TASK |ok:|failed:|changed:)')
+            | list
+          }}
+
+    - debug:
+        var: task_lines
+
+    - name: Build SNOW work notes
+      set_fact:
+        work_notes: |
+          Ansible Job {{ job_id }} Summary
+          --------------------------------
+
+          {% for line in task_lines %}
+          {{ line }}
+          {% endfor %}
+
+          (Generated automatically by AAP)
+
+    - name: Split raw log into safe chunks
+      set_fact:
+        lines: "{{ work_notes | regex_findall('TASK \\[[^\\]]+\\]') }}"
+
+    - name: Clean task names (strip TASK [ ])
+      set_fact:
+        task_names: "{{ lines | map('regex_replace', '^TASK \\[([^\\]]+)\\]$', '\\1') | list }}"
+
+    - name: Show extracted task names
+      debug:
+        msg: "{{ task_names }}"
+
+
+    - name: Render Snow work notes
+      ansible.builtin.template:
+        src: "work_notes.j2.txt"
+        dest: "/tmp/work_notes.txt"
+      register: rendered_notes
+    
+    - name: Close a change task
+      servicenow.itsm.change_request_task:
+         number: "{{ provision_ctask_number }}"
+         other:
+            work_notes: "{{ rendered_notes.content }}"
+            when: provision_ctask_number is defined
+
+ 
