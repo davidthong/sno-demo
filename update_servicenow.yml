@@ -4,7 +4,6 @@
 
   vars:
     aap_url: "https://aap24.dthong.com"
-    job_id: 138
     provision_ctask_number: CTASK0010344
 
   tasks:

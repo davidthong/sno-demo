@@ -1,5 +1,6 @@
 - name: Post Provisioning
   hosts: all
+  gather_facts: false
   roles:
      - vm_provision
 
