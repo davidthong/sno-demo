@@ -11,8 +11,8 @@
        ansible.builtin.uri:
           url: "{{ aap_url }}/api/v2/jobs/{{ job_id }}/stdout/?format=json"
           method: GET
-          user: "{{ controller_username }}"
-          password: "{{ controller_password }}"
+          user: "{{ credential.username }}"
+          password: "{{ credential.password }}"
           force_basic_auth: true
           validate_certs: false
           return_content: true
