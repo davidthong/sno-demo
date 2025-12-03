@@ -1,0 +1,6 @@
+- name: Post Provisioning
+  hosts: all
+  roles:
+     - vm_provision
+
+  
