@@ -1,26 +1,53 @@
----
-# tasks file for vm_provision
+- name: Update ServiceNow
+  hosts: localhost
+  gather_facts: false
 
-- name: Task 1 - Starting workflow
-  ansible.builtin.debug:
-    msg: "Stub task 1 executed — workflow started."
+  vars:
+    aap_url: "https://aap24.dthong.com"
+    job_id: 138
 
-- name: Task 2 - Validating inputs
-  ansible.builtin.debug:
-    msg: "Stub task 2 executed — inputs validated."
+  tasks:
 
-- name: Task 3 - Pretending to configure system
-  ansible.builtin.debug:
-    msg: "Stub task 3 executed — no real configuration performed."
+    - name: Get job stdout in JSON format
+      ansible.builtin.uri:
+        url: "{{ aap_url }}/api/v2/jobs/{{ job_id }}/stdout/?format=json"
+        method: GET
+        user: "{{ lookup('env', 'AAP_API_USER') }}"
+        password: "{{ lookup('env', 'AAP_API_PASS') }}"
+        force_basic_auth: true
+        validate_certs: false
+        return_content: true
+      register: job_json
 
-- name: Task 4 - Simulating external API call
-  ansible.builtin.debug:
-    msg: "Stub task 4 executed — would normally call an API here."
+    - name: Set raw log from API result
+      ansible.builtin.set_fact:
+        raw_log: "{{ job_json.json.content }}"
 
-- name: Task 5 - Ending workflow
-  ansible.builtin.debug:
-    msg: "Stub task 5 executed — workflow completed."
+    - name: Remove ANSI color codes from log
+      set_fact:
+        clean_log: "{{ raw_log | regex_replace('\\x1b\\[[0-9;]*m', '') }}"
 
+    - name: Extract structured task lines
+      set_fact:
+        task_lines: >-
+          {{
+            clean_log.split('\n')
+            | select('match', '^\\s*(TASK \\[|ok:|changed:|failed:)')
+            | list
+          }}
 
-- debug: var=tower_job_id
+    - name: Build SNOW work notes
+      set_fact:
+        work_notes: |
+          Ansible Job {{ job_id }} Summary
+          --------------------------------
 
+          {% for line in task_lines %}
+          {{ line }}
+          {% endfor %}
+
+          (Generated automatically by AAP)
+
+    - name: Display formatted work notes
+      debug:
+        msg: "{{ work_notes }}"
