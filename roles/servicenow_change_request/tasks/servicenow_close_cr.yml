@@ -1,0 +1,11 @@
+---
+- name: Close Change Request
+  servicenow.itsm.change_request:
+    state: closed
+    number: "{{ change_request_number }}"
+    close_code: "{{ cr_close_code }}"
+    close_notes: "{{ cr_close_notes }}"
+    other:
+      work_notes: "{{ cr_work_notes }}"
+  delegate_to: localhost
+

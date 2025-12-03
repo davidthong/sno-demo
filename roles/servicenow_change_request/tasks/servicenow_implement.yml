@@ -1,0 +1,6 @@
+---
+- name: Update change request to implement in ServiceNow
+  servicenow.itsm.change_request:
+    state: implement
+    number: "{{ change_request_number }}"
+  delegate_to: localhost

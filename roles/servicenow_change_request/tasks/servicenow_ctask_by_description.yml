@@ -1,0 +1,20 @@
+---
+- name: Retrieve change requests by number
+  servicenow.itsm.change_request_info:
+    number: "{{ change_request_number }}"
+  register: cr_info
+  delegate_to: localhost
+
+- name: Get CTask for {{ ctask_description }}
+  servicenow.itsm.change_request_task_info:
+    sysparm_query: "change_request={{ cr_info.records[0].sys_id }}^short_description={{ ctask_description }}"
+  register: ctask_info
+  delegate_to: localhost
+
+- name: Set ctask_number fact
+  ansible.builtin.set_fact:
+    ctask_number: "{{ ctask_info.records[0].number }}"
+  when:
+    - ctask_info.records | length > 0
+    - ctask_info.records[0].state == 'open'
+  delegate_to: localhost

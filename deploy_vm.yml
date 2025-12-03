@@ -2,8 +2,8 @@
 - name: Deploy VM
   hosts: localhost
   vars_files:
-     - vars/sizing.yml
-     - vars/defaults.yml
+    - vars/sizing.yml
+    - vars/defaults.yml
   vars:
     aap_job_id: "{{ tower_job_id }}"
     aap_job_url: "https://{{ aap_controller_hostname }}/#/jobs/playbook/{{ tower_job_id }}/output"
@@ -34,47 +34,47 @@
 
     - name: Deploy {{ vm_provider }}
       ansible.builtin.debug:
-         msg: 
-            - "Calling {{ vm_provider }} VM Deploy with these parameters"
-            - "Hostname --> {{ vm_hostname }}"
-            - "Size --> {{ vm_size }}"
-            - "Number of CPU --> {{ tshirt_sizes[vm_size].cpu}}"
-            - "Memory --> {{ tshirt_sizes[vm_size].ram_gb}}"
-            - "Storage --> {{ tshirt_sizes[vm_size].storage_gb}}"
-            - "SNOW REQ ID --> {{ snow_request_item_number }}"
-            - "SNOW CHANGE RQUEST NUMBER "
-            
-
-    
-     # - name: Create VM on Nutanix
-    #   nutanix.nutanix.nutanix_vm:
-    #     prism_host: "{{ nutanix_host }}"
-    #     prism_user: "{{ nutanix_username }}"
-    #     prism_password: "{{ nutanix_password }}"
-    #     validate_certs: false
-    #     state: present
-    #     name: "{{ vm_name }}"
-    #     cluster: "{{ cluster_name }}"
-    #     num_vcpus: "{{ tshirt_sizes[size].cpu }}"
-    #     num_cores_per_vcpu: 1
-    #     memory_gb: "{{ tshirt_sizes[size].ram_gb }}"
-    #     nics:
-    #       - network: "{{ network_name }}"
-    #     disks:
-    #       - size_gb: "{{ tshirt_sizes[size].storage_gb }}"
-    #         type: "DISK"
-    #         bus: "SCSI"
-    #     power_state: "on"
-    #   register: vm_result
-    #   when: vm_provider is 'nutanix'
-
+        msg:
+          - "Calling {{ vm_provider }} VM Deploy with these parameters"
+          - "Hostname --> {{ vm_hostname }}"
+          - "Size --> {{ vm_size }}"
+          - "Number of CPU --> {{ tshirt_sizes[vm_size].cpu}}"
+          - "Memory --> {{ tshirt_sizes[vm_size].ram_gb}}"
+          - "Storage --> {{ tshirt_sizes[vm_size].storage_gb}}"
+          - "SNOW REQ ID --> {{ snow_request_item_number }}"
+          - "SNOW CHANGE RQUEST NUMBER "
 
     - name: Post-Provisioning Block
       block:
+        # - name: Create VM on Nutanix
+        #   nutanix.nutanix.nutanix_vm:
+        #     prism_host: "{{ nutanix_host }}"
+        #     prism_user: "{{ nutanix_username }}"
+        #     prism_password: "{{ nutanix_password }}"
+        #     validate_certs: false
+        #     state: present
+        #     name: "{{ vm_name }}"
+        #     cluster: "{{ cluster_name }}"
+        #     num_vcpus: "{{ tshirt_sizes[size].cpu }}"
+        #     num_cores_per_vcpu: 1
+        #     memory_gb: "{{ tshirt_sizes[size].ram_gb }}"
+        #     nics:
+        #       - network: "{{ network_name }}"
+        #     disks:
+        #       - size_gb: "{{ tshirt_sizes[size].storage_gb }}"
+        #         type: "DISK"
+        #         bus: "SCSI"
+        #     power_state: "on"
+        #   register: vm_result
+        #   when: vm_provider is 'nutanix'
+
+        # Call VM Provisioning role to perform provisioning tasks
         - name: Calling VM Provisioning Role
           ansible.builtin.debug:
             msg: "..... Provisioning Complete"
 
+        # If all provisioning tasks are executed without error set vm_provisioning_success to trye
+        # and update change request CTask
         - name: Set Provisioning Success Flag to true
           ansible.builtin.set_fact:
             vm_provisioning_success: true
@@ -117,13 +117,24 @@
         - name: Log failure message
           ansible.builtin.debug:
             msg: "Provisioning failed — invoking error handling role."
-
+        - name: Set Provisioning Success Flag to false
+          ansible.builtin.set_fact:
+            vm_provisioning_success: false
         - name: Call the error handling role
           ansible.builtin.include_role:
             name: error_handling
           vars:
             error_context: "Post-Provisioning Block failed."
-            
+            change_request_number: "{{ change_request_number }}"
+        - name: Call ServiceNow Role to Cancel CTASK
+          ansible.builtin.include_role:
+            name: servicenow_change_request
+          vars:
+            servicenow_cr: "canceled_ctask"
+            change_request_number: "{{ change_request_number }}"
+            ctask_worknotes: "Automated Provisioning Failed. Automated Provisioning performed by AAP job ID: {{ tower_job_id }}. 
+            The output of the AAP job can be seen at {{ aap_job_url }}"
+            ctask_description: "{{ provision_ctask_description }}"
       always:
         - name: Show final provisioning result
           ansible.builtin.debug:

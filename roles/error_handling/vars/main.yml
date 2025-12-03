@@ -1,2 +1,8 @@
 ---
 # vars file for error_handling
+
+aap_job_id: "{{ tower_job_id }}"
+aap_job_url: "https://{{ aap_controller_hostname }}/#/jobs/playbook/{{ tower_job_id }}/output"
+provision_ctask_description: Automation - Provision
+validation_ctask_description: Automation Validation
+
