@@ -27,6 +27,10 @@
       set_fact:
         clean_log: "{{ raw_log | regex_replace('\\x1b\\[[0-9;]*m', '') }}"
 
+    - name: Normalize whitespace (critical)
+      set_fact:
+        clean_log: "{{ clean_log | regex_replace('[^\\S\\r\\n]+', ' ') }}"
+
     - debug: var=clean_log
 
     - name: Extract structured task lines
