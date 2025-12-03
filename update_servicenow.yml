@@ -70,17 +70,18 @@
       debug:
         msg: "{{ task_names }}"
 
-    - name: Nice JSON version
-      debug:
-        msg: "{{ task_names | to_nice_json }}"
+
+    - name: Render Snow work notes
+      ansible.builtin.template:
+        src: "work_notes.j2.txt"
+        dest: "/tmp/work_notes.txt"
+      register: rendered_notes
     
     - name: Close a change task
       servicenow.itsm.change_request_task:
          number: "{{ provision_ctask_number }}"
          other:
-            work_notes:  
-               - "List of Tasks automated by AAP: {{ task_names | to_nice_json }}"
-               - "For more details to AAP job# {{ job_id }} - {{ aap_url }}/api/v2/jobs/{{ job_id }}"
+            work_notes: "{{ rendered_notes.content }}"
             when: provision_ctask_number is defined
 
  
