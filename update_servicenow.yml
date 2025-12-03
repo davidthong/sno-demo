@@ -20,7 +20,7 @@
       register: job_json
 
     - name: Set raw log from API result
-      ansible.builtin.set_fact:
+      set_fact:
         raw_log: "{{ job_json.json.content }}"
 
     - name: Remove ANSI color codes
@@ -34,7 +34,7 @@
         task_lines: >-
           {{
             clean_log.split('\n')
-            | select('match', '^\\s*(TASK \\[|ok:|failed:|changed:)')
+            | select('match', '^\\s*(TASK|ok:|failed:|changed:)')
             | list
           }}
 
