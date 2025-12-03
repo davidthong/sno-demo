@@ -1,6 +1,10 @@
 ---
 - name: Retrieve sys_id for RITM {{ snow_request_item_number }}
   servicenow.itsm.api_info:
+    instance:
+      host: "{{ snow_host }}"
+      username: "{{ snow_username }}"
+      password: "{{ snow_password }}"
     resource: sc_req_item
     sysparm_query: "number={{ snow_request_item_number }}"
     display_value: "true"

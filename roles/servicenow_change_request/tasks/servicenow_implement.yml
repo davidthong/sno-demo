@@ -1,6 +1,10 @@
 ---
 - name: Update change request to implement in ServiceNow
   servicenow.itsm.change_request:
+    instance:
+      host: "{{ snow_host }}"
+      username: "{{ snow_username }}"
+      password: "{{ snow_password }}"
     state: implement
     number: "{{ change_request_number }}"
   delegate_to: localhost
