@@ -45,6 +45,8 @@
             | list
           }}
 
+    - debug: var=task_lines
+    
     # 5. Build a formatted ServiceNow work note
     - name: Build SNOW work notes
       set_fact:
