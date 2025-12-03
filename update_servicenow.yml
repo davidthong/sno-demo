@@ -17,5 +17,36 @@
             return_content: true
         register: job_json
 
+      - name: Set json
+        ansible.builtin.set_fact: 
+           raw_log: "{{ job_json.json.content }}"
 
-      - debug: var=job_json
+      - name: Remove ANSI color codes from log
+        set_fact:
+           clean_log: "{{ raw_log | regex_replace('\\x1b\\[[0-9;]*m', '') }}"
+
+    # 2. Extract only TASK lines plus ok/failed messages
+      - name: Extract structured task lines
+        set_fact:
+            task_lines: >-
+              {{
+                clean_log.split('\n')
+                | select('match', '^(TASK \\[|ok: \\[|failed: \\[)')
+                | list
+              }}
+
+    # 3. Build a nice formatted notes block
+      - name: Build SNOW work notes
+        set_fact:
+            work_notes: |
+              Ansible Job {{ job_id }} Summary
+              --------------------------------
+              {% for line in task_lines %}
+              {{ line }}
+              {% endfor %}
+
+              (Generated automatically by AAP)
+
+      - name: Show formatted notes
+        debug:
+           msg: "{{ work_notes }}"
