@@ -1,52 +1,62 @@
 - name: Update ServiceNow
   hosts: localhost
-  gather_facts: true
+  gather_facts: false
+
   vars:
-     aap_url: https://aap24.dthong.com
-     job_id: 138
+    # AAP controller URL
+    aap_url: "https://aap24.dthong.com"
+
+    # This can also be {{ tower_parent_job_id }}
+    job_id: 138
 
   tasks:
-      - name: Get job stdout in JSON format
-        ansible.builtin.uri:
-            url: "{{ aap_url }}/api/v2/jobs/{{ job_id }}/stdout/?format=json"
-            method: GET
-            user: "{{ lookup('env', 'AAP_API_USER') }}"
-            password: "{{ lookup('env', 'AAP_API_PASS') }}"
-            force_basic_auth: true
-            validate_certs: false
-            return_content: true
-        register: job_json
 
-      - name: Set json
-        ansible.builtin.set_fact: 
-           raw_log: "{{ job_json.json.content }}"
+    # 1. Retrieve Ansible job results from AAP API
+    - name: Get job stdout in JSON format
+      ansible.builtin.uri:
+        url: "{{ aap_url }}/api/v2/jobs/{{ job_id }}/stdout/?format=json"
+        method: GET
+        user: "{{ lookup('env', 'AAP_API_USER') }}"
+        password: "{{ lookup('env', 'AAP_API_PASS') }}"
+        force_basic_auth: true
+        validate_certs: false
+        return_content: true
+      register: job_json
 
-      - name: Remove ANSI color codes from log
-        set_fact:
-           clean_log: "{{ raw_log | regex_replace('\\x1b\\[[0-9;]*m', '') }}"
+    # 2. Extract raw log text from JSON
+    - name: Set raw log from API result
+      ansible.builtin.set_fact:
+        raw_log: "{{ job_json.json.content }}"
 
-    # 2. Extract only TASK lines plus ok/failed messages
-      - name: Extract structured task lines
-        set_fact:
-            task_lines: >-
-              {{
-                clean_log.split('\n')
-                | select('match', '^(TASK \\[|ok: \\[|failed: \\[)')
-                | list
-              }}
+    # 3. Remove ANSI escape sequences (\x1b[…m)
+    - name: Remove ANSI color codes from log
+      set_fact:
+        clean_log: "{{ raw_log | regex_replace('\\x1b\\[[0-9;]*m', '') }}"
 
-    # 3. Build a nice formatted notes block
-      - name: Build SNOW work notes
-        set_fact:
-            work_notes: |
-              Ansible Job {{ job_id }} Summary
-              --------------------------------
-              {% for line in task_lines %}
-              {{ line }}
-              {% endfor %}
+    # 4. Extract TASK lines + ok/failed/changed lines
+    - name: Extract structured task lines
+      set_fact:
+        task_lines: >-
+          {{
+            clean_log.split('\n')
+            | select('match', '^(TASK \\b|ok:|failed:|changed:)')
+            | list
+          }}
 
-              (Generated automatically by AAP)
+    # 5. Build a formatted ServiceNow work note
+    - name: Build SNOW work notes
+      set_fact:
+        work_notes: |
+          Ansible Job {{ job_id }} Summary
+          --------------------------------
 
-      - name: Show formatted notes
-        debug:
-           msg: "{{ work_notes }}"
+          {% for line in task_lines %}
+          {{ line }}
+          {% endfor %}
+
+          (Generated automatically by AAP)
+
+    # 6. Show final formatted work notes
+    - name: Display formatted work notes
+      debug:
+        msg: "{{ work_notes }}"
