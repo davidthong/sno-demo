@@ -78,7 +78,9 @@
       servicenow.itsm.change_request_task:
          number: "{{ provision_ctask_number }}"
          other:
-            work_notes: "Automated by AAP: {{ task_names | to_nice_json }}"
+            work_notes:  
+               - "List of Tasks automated by AAP: {{ task_names | to_nice_json }}"
+               - "For more details to AAP job# {{ job_id }} - {{ aap_url }}/api/v2/jobs/{{ job_id }}"
             when: provision_ctask_number is defined
 
  
