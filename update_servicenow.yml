@@ -3,12 +3,13 @@
   gather_facts: false
   vars:
      aap_url: https://aap24.dthong.com
+     job_id: 138
 
   tasks:
 
      - name: Get job stdout in JSON format
        ansible.builtin.uri:
-          url: "{{ aap_url }}/api/v2/jobs/{{ tower_job_id }}/stdout/?format=json"
+          url: "{{ aap_url }}/api/v2/jobs/{{ job_id }}/stdout/?format=json"
           method: GET
           user: "{{ controller_username }}"
           password: "{{ controller_password }}"
