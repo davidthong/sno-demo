@@ -27,9 +27,9 @@
       set_fact:
         clean_log: "{{ raw_log | regex_replace('\\x1b\\[[0-9;]*m', '') }}"
 
-    - name: Normalize whitespace (critical)
+    - name: Strip all control characters (critical fix)
       set_fact:
-        clean_log: "{{ clean_log | regex_replace('[^\\S\\r\\n]+', ' ') }}"
+        clean_log: "{{ clean_log | regex_replace('[\\x00-\\x1F\\x7F]', '') }}"
 
     - debug: var=clean_log
 
@@ -38,7 +38,7 @@
         task_lines: >-
           {{
             clean_log.split('\n')
-            | select('match', '^\\s*(TASK|ok:|failed:|changed:)')
+            | select('match', '.*(TASK |ok:|failed:|changed:)')
             | list
           }}
 
