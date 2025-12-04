@@ -69,6 +69,10 @@
     dest: "/tmp/work_notes.txt"
   register: rendered_notes
 
-- name: Show rendered Snow work notes
+- name: Get Contents of work notes file
+  set_fact:
+    rendered_notes_content: "{{ lookup('ansible.builtin.file', '/tmp/work_notes.txt') }}"
+
+- name: Show rendered Snow work notes content
   debug:
-    msg: "{{ rendered_notes }}"
+    msg: "{{ rendered_notes_content }}"
