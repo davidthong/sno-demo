@@ -24,3 +24,4 @@
       snow_action: ['close_ctask','update_ritm']
       ctask_description: "Automation Validation"
       job_id: "{{ tower_job_id }}"
+  no_log: true
