@@ -17,3 +17,7 @@
     no_count: false
   register: ritm_info
   delegate_to: localhost
+
+- name: Show ritm_info content
+  debug:
+    msg: "{{ ritm_info }}"
