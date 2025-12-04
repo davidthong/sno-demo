@@ -68,3 +68,7 @@
     src: "work_notes.j2.txt"
     dest: "/tmp/work_notes.txt"
   register: rendered_notes
+
+- name: Show rendered Snow work notes
+  debug:
+    msg: "{{ rendered_notes }}"
