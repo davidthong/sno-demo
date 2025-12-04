@@ -10,7 +10,7 @@
       password: "{{ snow_password }}"
     resource: sc_req_item
     action: patch
-    sys_id: "{{ ritm_info.sys_id }}"
+    sys_id: "{{ ritm_info.record[0].sys_id }}"
     data:
       work_notes: "{{ ritm_work_notes }}"
       comments: "{{ ritm_comments }}"
