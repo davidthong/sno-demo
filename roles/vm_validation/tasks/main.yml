@@ -21,6 +21,6 @@
 - name: Set variables for workflow
   set_stats:
     data:
-      snow_action: "close_ctask"
+      snow_action: ['close_ctask','update_ritm']
       ctask_description: "Automation Validation"
       job_id: "{{ tower_job_id }}"
