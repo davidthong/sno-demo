@@ -1,0 +1,26 @@
+- name: Task 1 - Validate workflow started
+  ansible.builtin.debug:
+    msg: "Stub task 1 executed — workflow started."
+
+- name: Task 2 - Validate Satellite joined
+  ansible.builtin.debug:
+    msg: "Stub task 2 executed — Satellite joined."
+
+- name: Task 3 - Validate Nimsoft Agent installed
+  ansible.builtin.debug:
+    msg: "Stub task 3 executed — Nimsoft agent installed."
+
+- name: Task 4 - Validate Splunk Agent installed
+  ansible.builtin.debug:
+    msg: "Stub task 4 executed — Splunk Agent installed."
+
+- name: Task 5 - Validate CIS Hardening applied
+  ansible.builtin.debug:
+    msg: "Stub task 5 executed — CIS Hardening applied."
+
+- name: Set variables for workflow
+  set_stats:
+    data:
+      snow_action: "close_ctask"
+      ctask_description: "Automation Validation"
+      job_id: "{{ tower_job_id }}"
