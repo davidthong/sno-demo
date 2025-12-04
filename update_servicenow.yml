@@ -25,7 +25,7 @@
         ctask_description: "{{ ctask_description }}"
       when:
         - snow_change_request_number is defined
-        - 'close_ctask' in snow_action
+        - "'close_ctask' in snow_action"
 
     - name: Call ServiceNow Role to Cancel CTASK
       ansible.builtin.include_role:
@@ -37,7 +37,7 @@
         ctask_description: "{{ ctask_description }}"
       when:
         - snow_change_request_number is defined
-        - 'canceled_ctask' in snow_action
+        - "'canceled_ctask' in snow_action"
 
     - name: Call ServiceNow Role to Update RITM
       ansible.builtin.include_role:
@@ -49,4 +49,4 @@
         ritm_comments: "This has been provisioned using Ansible Automation"
       when:
         - snow_request_item_number is defined
-        - 'update_ritm' in snow_action
+        - "'update_ritm' in snow_action"
