@@ -58,7 +58,7 @@
       vars:
         servicenow_ritm: "update_ritm"
         snow_request_item_number: "{{ snow_request_item_number }}"
-        ritm_work_notes: "{{ rendered_notes_content }}"
+        ritm_work_notes: "VM provisioning completed successfully."
         ritm_comments: "This has been provisioned using Ansible Automation"
       when:
         - snow_request_item_number is defined
