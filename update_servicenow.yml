@@ -20,7 +20,7 @@
         servicenow_cr: "close_ctask"
         change_request_number: "{{ snow_change_request_number }}"
         ctask_close_code: "successful"
-        ctask_close_notes: "Closed with AAP job # {{ job_id }}"
+        ctask_close_notes: "Closed after successful execution of AAP job # {{ job_id }}"
         ctask_work_notes: "{{ rendered_notes_content }}"
         ctask_description: "{{ ctask_description }}"
       when:
@@ -38,6 +38,19 @@
       when:
         - snow_change_request_number is defined
         - "'canceled_ctask' in snow_action"
+
+    - name: Call ServiceNow Role to Close Change Request
+      ansible.builtin.include_role:
+        name: servicenow_change_request
+      vars:
+        servicenow_cr: "close_cr"
+        change_request_number: "{{ snow_change_request_number }}"
+        cr_close_code: "successful"
+        cr_close_notes: "Change Request closed after successful completion of Ansible Automation to provision VMs"
+        cr_work_notes: "{{ rendered_notes_content }}"
+      when:
+        - snow_change_request_number is defined
+        - "'close_cr' in snow_action"
 
     - name: Call ServiceNow Role to Update RITM
       ansible.builtin.include_role:
