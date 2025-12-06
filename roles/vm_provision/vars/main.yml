@@ -1,2 +1,4 @@
 ---
 # vars file for vm_provision
+cluster_uuid: "0005b559-ca0a-0609-4805-1c34da421254"
+network_name: "L-VM-UNX-D-3207"
