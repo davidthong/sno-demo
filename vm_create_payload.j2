@@ -12,9 +12,9 @@
       "kind": "Cluster",
       "uuid": "{{ cluster_uuid }}"
     },
-    "num_vcpus_per_socket": {{ cores_per_vcpu }},
-    "num_sockets": {{ vcpus }},
-    "memory_size_mib": {{ memory_gb | int * 1024 }},
+    "num_vcpus_per_socket": {{ vm_num_vcpus }},
+    "num_sockets": {{ vm_num_sockets }},
+    "memory_size_mib": {{ vm_memory_mib }},
     "resources": {
       "nic_list": [
         {
@@ -38,7 +38,7 @@
           "is_cdrom": {{ 'true' if disk.type == 'CDROM' else 'false' }},
           "is_connected": true,
           {% if disk.type == 'DISK' %}
-          "disk_size_mib": {{ disk.size_gb | int * 1024 }},
+          "disk_size_mib": {{ vm_disk_size_mib }},
           "data_source_reference": {
             "kind": "Image",
             "uuid": "{{ disk.image_uuid }}"
