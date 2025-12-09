@@ -1,0 +1,58 @@
+{
+  "api_version": "3.1.0",
+  "metadata": {
+    "kind": "Vm",
+    "name": "{{ vm_name }}",
+    "description": "{{ vm_desc | default(vm_name + ' created by Ansible') }}"
+  },
+  "spec": {
+    "name": "{{ vm_name }}",
+    "description": "{{ vm_desc | default('') }}",
+    "cluster_reference": {
+      "kind": "Cluster",
+      "uuid": "{{ cluster_uuid }}"
+    },
+    "num_vcpus_per_socket": {{ cores_per_vcpu }},
+    "num_sockets": {{ vcpus }},
+    "memory_size_mib": {{ memory_gb | int * 1024 }},
+    "resources": {
+      "nic_list": [
+        {
+          "nic_type": "NORMAL_NIC",
+          "subnet_reference": {
+            "kind": "Subnet",
+            "uuid": "{{ subnet_uuid }}"
+          },
+          "is_connected": true
+        }
+      ],
+      "disk_list": [
+        {% for disk in disks %}
+        {
+          "device_properties": {
+            "device_type": "{{ disk.type }}",
+            "disk_address": {
+              "adapter_type": "{{ disk.bus }}"
+            }
+          },
+          "is_cdrom": {{ 'true' if disk.type == 'CDROM' else 'false' }},
+          "is_connected": true,
+          {% if disk.type == 'DISK' %}
+          "disk_size_mib": {{ disk.size_gb | int * 1024 }},
+          "data_source_reference": {
+            "kind": "Image",
+            "uuid": "{{ disk.image_uuid }}"
+          }
+          {% endif %}
+        }
+        {% if not loop.last %},{% endif %}
+        {% endfor %}
+      ],
+      "guest_customization": {
+        "cloud_init": {
+          "user_data": "{{ cloud_init_content.content }}"
+        }
+      }
+    }
+  }
+}
