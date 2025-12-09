@@ -3,7 +3,6 @@
   gather_facts: false
 
   vars:
-    aap_url: "https://aap24.dthong.com"
     snow_username: "{{ lookup('env', 'SN_USERNAME') }}"
     snow_password: "{{ lookup('env', 'SN_PASSWORD') }}"
     snow_host: "{{ lookup('env', 'SN_HOST') }}"
