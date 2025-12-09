@@ -51,7 +51,13 @@
   ignore_errors: true 
   delegate_to: localhost
   when: vm_uuid is defined
-
+  retries: 3           
+  delay: 30            
+  until: >             
+    vm_delete_result is succeeded or        
+    vm_delete_result.status == 404 or       
+    'The requested URL was not found' in vm_delete_result.content | default('')
+    
 - name: Log deletion result
   ansible.builtin.debug:
     msg: "VM deletion result: {{ vm_delete_result }}"
@@ -92,7 +98,10 @@
     validate_certs: false
   delegate_to: localhost
   register: release_result
-
+  retries: 3           
+  delay: 30            
+  until: release_result is succeeded
+  
 - name: Log release result
   ansible.builtin.debug:
     msg: "Release IP result: {{ release_result }}"
