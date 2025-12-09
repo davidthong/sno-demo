@@ -112,9 +112,40 @@
     #  until: vm_result.failed == false
     #  retries: 3
     #  delay: 60
-    #  when: vm_provider is 'nutanix'
+      when: vm_provider is 'nutanix'
 
+    - name: Look up VM details by name
+      ansible.builtin.uri:
+        url: "https://{{ nutanix_host }}:9440/api/nutanix/v3/vms/list"
+        method: POST
+        user: "{{ nutanix_username }}"
+        password: "{{ nutanix_password }}"
+        validate_certs: false
+        force_basic_auth: true
+        status_code: 200
+        headers:
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          kind: vm
+          filter: "vm_name=={{ vm_name }}"
+          length: 1
+        use_proxy: no 
+        register: vm_lookup_result
+        delegate_to: localhost
 
+    - name: Set VM IP Address as Fact
+      ansible.builtin.set_fact:
+        vm_ip: "{{ vm_lookup_result.json.entities[0].status.resources.nic_list[0].ip_endpoint_list[0].ip }}"
+      when: >
+        vm_lookup_result.json.entities | length > 0 and 
+        vm_lookup_result.json.entities[0].status.resources.nic_list[0].ip_endpoint_list | length > 0
+
+    - name: Display Found IP Address
+      ansible.builtin.debug:
+        msg: "Found VM IP: {{ vm_ip }}"
+      when: vm_ip is defined
+  
     - name: Post-Provisioning Block
       block:
         - name: Calling VM Provisioning Role
