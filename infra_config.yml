@@ -1,0 +1,44 @@
+---
+# ==============================================================================
+# General Provisioning Variables
+# ==============================================================================
+provision_method: "bootdisk"
+operatingsystem: "RHEL 9.4"
+satellite_server_url: "https://jdcuainfsat2.prod.entergy.com"
+ptable: "1Partition Table PROD UEFI"
+
+# ==============================================================================
+# Nutanix Cluster Definitions (List of available target clusters)
+# ==============================================================================
+cluster:
+  - name: JDC03
+    storage_uuid: "a8d78db0-eb2c-4a8f-9d7f-5e26e1cd69a3"
+    cluster_name: "JDC-UNIX-App-Hosting-03"
+    nutanix_ip: "10.141.68.10"
+    location: "Jackson"
+    hostgroup: "N-HG-JDC-R9"
+    central: "10.140.61.100"
+
+  - name: JDC04
+    storage_uuid: "85facb88-116f-450c-9478-badbc2e5a7e6"
+    cluster_name: "JDC-UNIX-App-Hosting-04"
+    nutanix_ip: "10.141.68.13"
+    location: "Jackson"
+    hostgroup: "N-HG-JDC-R9"
+    central: "10.140.61.100"
+
+  - name: LRL03
+    storage_uuid: "d7fc7a48-b842-49b9-bc6c-ed6fc82f523e"
+    cluster_name: "lit-unix-app-hosting-03"
+    nutanix_ip: "10.171.68.10"
+    location: "LittleRock"
+    hostgroup: "N-HG-LRL-R9"
+    central: "10.170.61.100"
+
+  - name: LRL04
+    storage_uuid: "0bb8e40e-4e19-4f46-a379-aef299a1b31c"
+    cluster_name: "lit-unix-app-hosting-04"
+    nutanix_ip: "10.171.68.13"
+    location: "LittleRock"
+    hostgroup: "N-HG-LRL-R9"
+    central: "10.170.61.100"
