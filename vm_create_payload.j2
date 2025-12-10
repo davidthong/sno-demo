@@ -2,19 +2,20 @@
   "api_version": "3.1.0",
   "metadata": {
     "kind": "Vm",
-    "name": "{{ vm_name }}",
-    "description": "{{ vm_desc | default(vm_name + ' created by Ansible') }}"
+    "name": "{{ vm_name }}"
   },
   "spec": {
     "name": "{{ vm_name }}",
-    "description": "{{ vm_desc | default('') }}",
+    "description": "VM Provisioned by Ansible API Call",
     "cluster_reference": {
       "kind": "Cluster",
-      "uuid": "{{ cluster_uuid }}"
+      "uuid": "{{ item.cluster_uuid }}"
     },
-    "num_vcpus_per_socket": {{ vm_num_vcpus }},
-    "num_sockets": 1,
+    "num_vcpus_per_socket": 1,
+    "num_sockets": {{ vm_num_vcpus }},
     "memory_size_mib": {{ vm_memory_mib }},
+    "power_state": "OFF",
+    "timezone": "UTC",
     "resources": {
       "nic_list": [
         {
@@ -27,31 +28,31 @@
         }
       ],
       "disk_list": [
-        {% for disk in disks %}
         {
           "device_properties": {
-            "device_type": "{{ disk.type }}",
+            "device_type": "DISK",
             "disk_address": {
-              "adapter_type": "{{ disk.bus }}"
+              "adapter_type": "SCSI"
             }
           },
-          "is_cdrom": {{ 'true' if disk.type == 'CDROM' else 'false' }},
+          "is_cdrom": false,
           "is_connected": true,
-          {% if disk.type == 'DISK' %}
           "disk_size_mib": {{ vm_disk_size_mib }},
-          "data_source_reference": {
-            "kind": "Image",
-            "uuid": "{{ disk.image_uuid }}"
+          "storage_config": {
+            "storage_container_reference": {
+              "kind": "StorageContainer",
+              "uuid": "{{ item.storage_uuid }}"
+            }
           }
-          {% endif %}
         }
-        {% if not loop.last %},{% endif %}
-        {% endfor %}
       ],
-      "guest_customization": {
-        "cloud_init": {
-          "user_data": "{{ cloud_init_content.content }}"
-        }
+      "boot_config": {
+        "boot_type": "UEFI",
+        "boot_device_order_list": [
+          "DISK",
+          "CDROM",
+          "NETWORK"
+        ]
       }
     }
   }
