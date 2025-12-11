@@ -2,6 +2,7 @@
 # ==============================================================================
 # General Provisioning Variables
 # ==============================================================================
+aap_controller_hostname: aap-dev.entergy.com
 provision_method: "bootdisk"
 operatingsystem: "RHEL 9.4"
 satellite_server_url: "https://jdcuainfsat2.prod.entergy.com"
@@ -42,3 +43,11 @@ cluster:
     location: "LittleRock"
     hostgroup: "N-HG-LRL-R9"
     central: "10.170.61.100"
+
+  - name: LRDEV
+    storage_uuid: "db81c560-d084-4a9e-8bdb-5143a39a4165"
+    cluster_name: "LIT-DEV-NTNX-01"
+    nutanix_ip: "10.171.68.70"
+    location: "LittleRock"
+    hostgroup: "N-HG-LRL-R9"
+    central: "10.170.58.100"
