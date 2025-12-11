@@ -9,7 +9,7 @@
     "description": "VM Provisioned by Ansible API Call",
     "cluster_reference": {
       "kind": "Cluster",
-      "uuid": "{{ item.cluster_uuid }}"
+      "uuid": "{{ cluster_uuid }}"
     },
     "num_vcpus_per_socket": 1,
     "num_sockets": {{ vm_num_vcpus }},
@@ -41,7 +41,7 @@
           "storage_config": {
             "storage_container_reference": {
               "kind": "StorageContainer",
-              "uuid": "{{ item.storage_uuid }}"
+              "uuid": "{{ storage_uuid }}"
             }
           }
         }
