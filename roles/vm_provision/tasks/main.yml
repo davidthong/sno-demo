@@ -1,53 +1,53 @@
-- name: Look up UUID for Network/Subnet Name
-  ansible.builtin.uri:
-    url: "https://{{ nutanix_host }}:9440/api/nutanix/v3/subnets/list"
-    method: POST
-    user: "{{ nutanix_username }}"
-    password: "{{ nutanix_password }}"
-    validate_certs: false
-    force_basic_auth: true
-    status_code: 200
-    headers:
-      Content-Type: "application/json"
-    body_format: json
-    body:
-      kind: subnet
-      filter: "name=={{ network_name }}" # Filter by the subnet name
-      # Limit results to 1 since names should be unique in the scope you are searching
-      length: 1
-  register: subnet_lookup_result
-  delegate_to: localhost # Run this on the controller node
-
-- name: Set Network UUID as Fact
-  ansible.builtin.set_fact:
-  # Safely extract the UUID from the first item found in the 'entities' list
-    network_uuid: "{{ subnet_lookup_result.json.entities[0].metadata.uuid }}"
-  when: subnet_lookup_result.json.entities | length > 0
-
-- name: Display network UUID
-  ansible.builtin.debug:
-    msg: "network UUID: {{ network_uuid }}"
-
-- name: Calculate and set integer facts for VM specs
-  ansible.builtin.set_fact:
-    vm_num_vcpus: "{{ tshirt_sizes[size].cpu | int }}"
-    vm_memory_mib: "{{ (tshirt_sizes[size].ram_gb * 1024) | int }}"
-    vm_disk_size_mib: "{{ (tshirt_sizes[size].storage_gb * 1024) | int }}"
-
-- name: Create VM on Nutanix via API
-  ansible.builtin.uri:
-    url: "https://{{ nutanix_host }}:9440/api/nutanix/v3/vms"
-    method: POST
-    user: "{{ nutanix_username }}"
-    password: "{{ nutanix_password }}"
-    validate_certs: false
-    force_basic_auth: true
-    status_code: 202 # The v3 API returns 202 (Accepted) for asynchronous operations
-    headers:
-      Content-Type: "application/json"
-    body_format: json
-    body: "{{ lookup('template', 'vm_create_json.j2') }}"
-  register: vm_result
+#- name: Look up UUID for Network/Subnet Name
+#  ansible.builtin.uri:
+#    url: "https://{{ nutanix_host }}:9440/api/nutanix/v3/subnets/list"
+#    method: POST
+#    user: "{{ nutanix_username }}"
+#    password: "{{ nutanix_password }}"
+#    validate_certs: false
+#    force_basic_auth: true
+#    status_code: 200
+#    headers:
+#      Content-Type: "application/json"
+#    body_format: json
+#    body:
+#      kind: subnet
+#      filter: "name=={{ network_name }}" # Filter by the subnet name
+#      # Limit results to 1 since names should be unique in the scope you are searching
+#      length: 1
+#  register: subnet_lookup_result
+#  delegate_to: localhost # Run this on the controller node
+#
+#- name: Set Network UUID as Fact
+#  ansible.builtin.set_fact:
+#  # Safely extract the UUID from the first item found in the 'entities' list
+#    network_uuid: "{{ subnet_lookup_result.json.entities[0].metadata.uuid }}"
+#  when: subnet_lookup_result.json.entities | length > 0
+#
+#- name: Display network UUID
+#  ansible.builtin.debug:
+#    msg: "network UUID: {{ network_uuid }}"
+#
+#- name: Calculate and set integer facts for VM specs
+#  ansible.builtin.set_fact:
+#    vm_num_vcpus: "{{ tshirt_sizes[size].cpu | int }}"
+#    vm_memory_mib: "{{ (tshirt_sizes[size].ram_gb * 1024) | int }}"
+#    vm_disk_size_mib: "{{ (tshirt_sizes[size].storage_gb * 1024) | int }}"
+#
+#- name: Create VM on Nutanix via API
+#  ansible.builtin.uri:
+#    url: "https://{{ nutanix_host }}:9440/api/nutanix/v3/vms"
+#    method: POST
+#    user: "{{ nutanix_username }}"
+#    password: "{{ nutanix_password }}"
+#    validate_certs: false
+#    force_basic_auth: true
+#    status_code: 202 # The v3 API returns 202 (Accepted) for asynchronous operations
+#    headers:
+#      Content-Type: "application/json"
+#    body_format: json
+#    body: "{{ lookup('template', 'vm_create_json.j2') }}"
+#  register: vm_result
 #  until: vm_result.failed == false
 #  retries: 3
 #  delay: 60
