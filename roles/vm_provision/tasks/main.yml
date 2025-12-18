@@ -78,6 +78,6 @@
   set_stats:
     data:
       snow_action: ['close_ctask']
-      ctask_description: "Automation - Provision"
+      ctask_description: "Automation -  Provision"
       job_id: "{{ tower_job_id }}"
   no_log: true

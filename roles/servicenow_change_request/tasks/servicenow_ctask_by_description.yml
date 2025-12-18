@@ -15,7 +15,7 @@
       host: "{{ snow_host }}"
       username: "{{ snow_username }}"
       password: "{{ snow_password }}"
-    sysparm_query: "change_request={{ cr_info.records[0].sys_id }}^short_description={{ ctask_description }}"
+    sysparm_query: "change_request={{ cr_info.records[0].sys_id }}^short_descriptionSTARTSWITH{{ ctask_description }}"
   register: ctask_info
   delegate_to: localhost
 
