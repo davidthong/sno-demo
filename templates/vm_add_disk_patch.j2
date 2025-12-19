@@ -1,0 +1,55 @@
+{
+  "api_version": "3.1.0",
+  "metadata": {
+    "uuid": "{{ new_vm_uuid }}"
+  },
+  "spec": {
+    "resources": {
+      "num_vcpus_per_socket": {{ vm_num_vcpus }},
+      "num_sockets": {{ vm_get_result.json.spec.resources.num_sockets }},
+      "memory_mib": {{ vm_memory_mib }},
+      "guest_os_id": "{{ vm_get_result.json.spec.resources.guest_os_id }}",
+      "power_state": "ON",
+      
+      "disk_list": [
+        {% for disk in vm_get_result.json.spec.resources.disk_list %}
+        {
+          "uuid": "{{ disk.uuid }}",
+          "disk_size_mib": {{ disk.disk_size_mib }},
+          "source_image_reference": {
+            "kind": "image",
+            "uuid": "{{ disk.source_image_reference.uuid }}"
+          },
+          "device_properties": {
+            "device_type": "{{ disk.device_properties.device_type }}",
+            "device_value": {{ disk.device_properties.device_value }}
+          }
+        },
+        {% endfor %}
+        # --- NEW DISK ADDITION ---
+        {
+          "disk_size_mib": {{ vm_second_disk_mib }},
+          "storage_container_reference": {
+            "kind": "storage_container",
+            "uuid": "{{ storage_uuid }}"
+          },
+          "device_properties": {
+            "device_type": "DISK",
+            "device_bus": "SCSI"
+          }
+        }
+      ],
+      "nic_list": [
+        {% for nic in current_vm_details.json.spec.resources.nic_list %}
+        {
+          "uuid": "{{ nic.uuid }}",
+          "subnet_reference": {
+            "kind": "subnet",
+            "uuid": "{{ nic.subnet_reference.uuid }}"
+          }
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+      ]
+    }
+  }
+}

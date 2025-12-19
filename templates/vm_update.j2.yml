@@ -1,0 +1,43 @@
+{% set new_cdrom = {
+    "device_properties": {
+        "device_type": "CDROM",
+        "disk_address": {
+            "adapter_type": "IDE",
+            "device_index": 0
+        }
+    },
+    "data_source_reference": {
+        "kind": "image",
+        "uuid": iso_uuid
+    }
+} %}
+{
+  "api_version": "{{ vm_get_result.json.api_version }}",
+  "metadata": {
+    "uuid": "{{ vm_get_result.json.metadata.uuid }}",
+    "kind": "vm",
+    "spec_version": {{ vm_get_result.json.metadata.spec_version | int }}
+  },
+  "spec": {
+    "name": "{{ vm_get_result.json.spec.name }}",
+    "description": "{{ vm_get_result.json.spec.description }}",
+    "cluster_reference": {{ vm_get_result.json.spec.cluster_reference | default({}) | to_json }},
+    "resources": {
+      "hardware_clock_timezone": "UTC",
+      "power_state": "ON",
+      "num_sockets": 1,
+      "num_vcpus_per_socket": {{ vm_num_vcpus | default(2) | int }},
+      "memory_size_mib": {{ vm_memory_mib | default(4096) | int }},
+      "disk_list": {{ (vm_get_result.json.spec.resources.disk_list + [new_cdrom]) | to_json }},
+      "nic_list": {{ vm_get_result.json.spec.resources.nic_list | to_json }},
+      "boot_config": {
+        "boot_type": "UEFI",
+        "boot_device_order_list": [
+          "CDROM",
+          "DISK",
+          "NETWORK"
+        ]
+      }
+    }
+  }
+}
