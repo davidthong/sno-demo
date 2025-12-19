@@ -1,0 +1,5 @@
+---
+- name: Update RITM
+  ansible.builtin.include_tasks: servicenow_update_ritm.yml
+  when:
+    - servicenow_ritm == "update"

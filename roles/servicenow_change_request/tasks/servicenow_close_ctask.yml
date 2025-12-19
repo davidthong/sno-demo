@@ -1,0 +1,19 @@
+---
+- name: Get CTask By Description
+  ansible.builtin.include_tasks: servicenow_ctask_by_description.yml
+
+- name: Close {{ ctask_description }} CTask
+  servicenow.itsm.change_request_task:
+    state: closed
+    close_code: "{{ ctask_close_code }}"
+    close_notes: "{{ ctask_close_notes }}"
+    number: "{{ ctask_number }}"
+    other:
+      work_notes: "{{ ctask_work_notes }}"
+  when: ctask_number is defined
+  delegate_to: localhost
+
+- name: Debug {{ ctask_description }} CTask
+  ansible.builtin.debug:
+    var: ctask_info
+  delegate_to: localhost

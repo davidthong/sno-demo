@@ -1,0 +1,13 @@
+---
+- name: Get RITM By Number
+  ansible.builtin.include_tasks: servicenow_ritm_by_number.yml
+
+- name: Post a worknote and a comment on ticket# {{ snow_request_item_number }} when success
+  servicenow.itsm.api:
+    resource: sc_req_item
+    action: patch
+    sys_id: "{{ ritm_info.sys_id }}"
+    data:
+      work_notes: "{{ ritm_work_notes }}"
+      comments: "{{ ritm_comments }}"
+  delegate_to: localhost

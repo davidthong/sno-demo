@@ -1,0 +1,76 @@
+---
+- name: ServiceNow Incident Poller - NEW + Contains "test"
+  hosts: all
+
+  sources:
+    - name: Poll NEW incidents containing "test"
+      servicenow.itsm.records:
+        instance:
+          host: "{{ SN_HOST }}"
+          username: "{{ SN_USERNAME }}"
+          password: "{{ SN_PASSWORD }}"
+          validate_certs: false
+        table: incident
+        interval: 10
+        sysparm_query: "state=1^short_descriptionLIKEtest"
+
+  rules:
+    - name: Launch workflow when NEW incident matches filter
+      condition: event.state is defined
+      actions:
+
+        - debug:
+            msg: >
+              DetectionLatencySeconds={{
+                (
+                  (
+                    event.meta.received_at.split('T')[1]
+                      .replace('Z','')
+                      .split(':')[0] | int * 3600
+                  )
+                  +
+                  (
+                    event.meta.received_at.split('T')[1]
+                      .replace('Z','')
+                      .split(':')[1] | int * 60
+                  )
+                  +
+                  (
+                    event.meta.received_at
+                      .replace('Z','')
+                      .split(':')[2].split('.')[0] | int
+                  )
+                  +
+                  (
+                    event.meta.received_at
+                      .replace('Z','')
+                      .split(':')[2].split('.')[1] | float / 1000000
+                  )
+                )
+                -
+                (
+                  (
+                    event.sys_updated_on.split(' ')[1].split(':')[0] | int * 3600
+                  )
+                  +
+                  (
+                    event.sys_updated_on.split(' ')[1].split(':')[1] | int * 60
+                  )
+                  +
+                  (
+                    event.sys_updated_on.split(' ')[1].split(':')[2] | int
+                  )
+                )
+              }}
+              SNOW_UpdatedAt={{ event.sys_updated_on }}
+              EDA_ReceivedAt={{ event.meta.received_at }}
+
+        - run_workflow_template:
+            name: "SNOW Remediation Demo - Workflow To Stop Service"
+            organization: "Default"
+            job_args:
+              extra_vars:
+                incident_number: "{{ event.number }}"
+                incident_sys_id: "{{ event.sys_id }}"
+                cmdb_sys_id: "{{ event.cmdb_ci }}"
+                short_description: "{{ event.short_description }}"
