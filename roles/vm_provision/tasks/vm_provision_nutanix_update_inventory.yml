@@ -1,0 +1,22 @@
+- name: Wait for build (Phase 1: OS Install Start)
+  ansible.builtin.pause:
+    minutes: 2
+
+- name: Refresh inventory in AAP
+  ansible.builtin.uri:
+    # Note: This URL is for a specific inventory source update endpoint (ID 2702)
+    url: "https://{{ aap_controller_hostname }}/api/v2/inventory_sources/2702/update/"
+    method: POST
+    user: "{{ lookup('env', 'AAP_API_USER') }}" 
+    password: "{{ lookup('env', 'AAP_API_PASS') }}"
+    force_basic_auth: true
+    validate_certs: false
+    body_format: json
+    use_proxy: no
+    body:
+      can_update: true
+    status_code: 202 # Expect 202 (Accepted) as the update runs asynchronously
+
+- name: Wait for build 
+  ansible.builtin.pause:
+    minutes: 2

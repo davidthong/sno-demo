@@ -1,0 +1,106 @@
+- name: Set ISO variables
+  ansible.builtin.set_fact:
+    iso_name: "{{ vm_name }}.iso"
+
+- name: Set Host ID Fact
+  ansible.builtin.set_fact:
+    host_id: "{{ new_host_check.entity.hosts[0].id }}"
+
+- name: Common ISO setup variables
+  ansible.builtin.set_fact:
+    iso_source_uri: "{{ satellite_server_url }}/api/bootdisk/hosts/{{ host_id }}?full=true"
+
+# - name: Download ISO from API to Satellite Pub Folder
+#   ansible.builtin.get_url:
+#     url: "{{ iso_source_uri }}"
+#     url_username: "{{ satellite_username }}"
+#     url_password: "{{ satellite_password }}"
+#     dest: "/var/www/html/pub/{{ iso_name }}"
+#     force_basic_auth: true
+#     validate_certs: false
+#     use_proxy: no
+#   delegate_to: 10.140.48.88
+#   become: true
+
+- name: Tell Nutanix to Pull from Satellite (v3 Intent)
+  ansible.builtin.uri:
+    url: "https://{{ nutanix_central }}:9440/api/nutanix/v3/images"
+    method: POST
+    user: "{{ nutanix_username }}"
+    password: "{{ nutanix_password }}"
+    force_basic_auth: true
+    validate_certs: false
+    body_format: json
+    use_proxy: no
+    body:
+      api_version: "3.1.0"
+      metadata:
+        name: "{{ iso_name }}"
+        kind: image
+      spec:
+        name: "{{ iso_name }}"
+        resources:
+          image_type: ISO_IMAGE
+          source_uri: "{{ satellite_server_url }}/pub/{{ iso_name }}"
+    status_code: [200, 202]
+  register: pull_request
+
+- name: Extract Task UUID 
+  ansible.builtin.set_fact:
+    upload_task_uuid: "{{ pull_request.json.status.execution_context.task_uuid }}"
+
+- name: Poll for Task Completion
+  ansible.builtin.uri:
+    url: "https://{{ nutanix_central }}:9440/api/nutanix/v3/tasks/{{ upload_task_uuid }}"
+    method: GET
+    user: "{{ nutanix_username }}"
+    password: "{{ nutanix_password }}"
+    force_basic_auth: true
+    validate_certs: false
+    use_proxy: no
+  register: task_status
+  until: task_status.json.status | default('') == 'SUCCEEDED'
+  failed_when: task_status.json.status | default('') == 'FAILED'
+
+- name: Extract Final ISO UUID
+  ansible.builtin.set_fact:
+    iso_uuid: "{{ pull_request.json.metadata.uuid }}"
+
+- name: Verify ISO UUID
+  ansible.builtin.debug:
+    msg: "The ISO was created with UUID: {{ iso_uuid }}"
+
+
+- name: Get Current VM Configuration (Required for API PUT)
+  ansible.builtin.uri:
+    url: "https://{{ nutanix_central }}:9440/api/nutanix/v3/vms/{{ new_vm_uuid }}"
+    method: GET
+    user: "{{ nutanix_username }}"
+    password: "{{ nutanix_password }}"
+    validate_certs: false
+    force_basic_auth: true
+    use_proxy: no
+    status_code: [200]
+  register: vm_get_result
+
+
+- name: DEBUG | Show vm_get_result
+  ansible.builtin.debug:
+    var: vm_get_result
+
+- name: Attach ISO, Update Boot Order, and Power On VM (API PUT Call)
+  ansible.builtin.uri:
+    url: "https://{{ nutanix_central }}:9440/api/nutanix/v3/vms/{{ new_vm_uuid }}"
+    method: PUT
+    headers:
+      Content-Type: "application/json"
+    user: "{{ nutanix_username }}"
+    password: "{{ nutanix_password }}"
+    validate_certs: false
+    force_basic_auth: true
+    use_proxy: no
+    body_format: json
+    status_code: [200, 202]
+    body: "{{ lookup('template', 'vm_update.j2') }}"
+  register: vm_update_result
+ 

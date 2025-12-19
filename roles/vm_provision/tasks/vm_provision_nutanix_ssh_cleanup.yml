@@ -1,0 +1,62 @@
+- name: Add second disk to VM (API PATCH) optional
+  ansible.builtin.uri:
+    url: "https://{{ nutanix_central }}:9440/api/nutanix/v3/vms/{{ new_vm_uuid  }}"
+    method: PATCH
+    user: "{{ nutanix_username }}"
+    password: "{{ nutanix_password }}"
+    validate_certs: false
+    force_basic_auth: true
+    use_proxy: no
+    status_code: [202]
+    headers:
+      Content-Type: "application/json"
+    body_format: json
+    # Use a Jinja2 template to construct the complex body needed for adding a disk.
+    # Nutanix API v3 requires sending the *entire* VM spec with the modification included.
+    body: "{{ lookup('template', 'vm_add_disk_patch.j2') }}"
+  when: second_disk_size is defined 
+  # This task relies on a custom Jinja2 template (vm_add_disk_patch.j2)
+  # which must fetch the current VM spec (GET /vms/{uuid}) and append the disk.
+
+- name: Wait for SSH port 22
+  ansible.builtin.wait_for:
+    host: "{{ vm_ip }}" 
+    port: 22
+    state: started
+    delay: 60      
+    timeout: 1800  # Fail after 30 minutes
+  delegate_to: localhost
+
+- name: Eject ISO from VM (Prepare for Deletion)
+  ansible.builtin.uri:
+    url: "https://{{ nutanix_central }}:9440/api/nutanix/v3/vms/{{ new_vm_uuid }}"
+    method: PUT
+    user: "{{ nutanix_username }}"
+    password: "{{ nutanix_password }}"
+    force_basic_auth: true
+    validate_certs: false
+    use_proxy: no
+    body_format: json
+    body: |
+      {% set current_spec = vm_get_result.json %}
+      {# Update the disk_list to remove the image_reference from the CD-ROM #}
+      {% for disk in current_spec.spec.resources.disk_list %}
+        {% if disk.device_properties.device_type == 'CDROM' %}
+           {% set _ = disk.pop('data_source_reference', None) %}
+        {% endif %}
+      {% endfor %}
+      {{ current_spec | to_json }}
+    status_code: [202]
+  register: eject_task
+
+- name: Remove ISO from Nutanix Image Service
+  ansible.builtin.uri:
+    url: "https://{{ nutanix_central }}:9440/api/nutanix/v3/images/{{ iso_uuid }}"
+    method: DELETE
+    user: "{{ nutanix_username }}"
+    password: "{{ nutanix_password }}"
+    force_basic_auth: true
+    validate_certs: false
+    use_proxy: no
+    status_code: [202, 404]
+  when: eject_task is succeeded

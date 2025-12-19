@@ -1,0 +1,35 @@
+- name: DEBUG | Show the full VM creation API response
+  ansible.builtin.debug:
+    var: new_vm_check
+
+- name: (20-create-host.yml) Create VM as Host Entry in Satellite
+  # Use the Ansible Satellite module to manage host entities
+  redhat.satellite.host:
+    # Connection and Authentication
+    username: "{{ satellite_username }}"
+    password: "{{ satellite_password }}"
+    server_url: "{{ satellite_server_url }}"
+    validate_certs: no # Set to 'yes' or path to CA bundle in production!
+    
+    # General Host Details
+    organization: "ENTERGY"
+    name: "{{ vm_name + '.' + domain }} " # Fully Qualified Domain Name (FQDN)
+    location: "{{ cluster_location }}"
+    comment: "{{ comment }}"
+    hostgroup: "{{ host_group }}"
+    ptable: "{{ ptable }}"   
+    domain: "{{ domain }}" 
+    # Network Interface Configuration (Interfaces Attributes)
+    interfaces_attributes:
+      - type: interface
+        primary: true
+        managed: true
+        ip: "{{ vm_ip }}"
+        subnet: "{{ subnet }}"
+        mac: "{{ final_vm_details.json.status.resources.nic_list[0].mac_address }}"
+        name: "{{ vm_name }}"
+        domain: "{{ domain }}"        
+    # Provisioning/Build State
+    build: yes # Set the host to 'build' mode, ready for OS installation
+    state: present # Ensure the host record exists
+  register: new_host_check

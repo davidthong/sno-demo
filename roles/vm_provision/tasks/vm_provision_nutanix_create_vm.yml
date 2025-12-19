@@ -1,0 +1,186 @@
+---
+- name: Convert variable name from ServiceNow
+  ansible.builtin.set_fact:
+    vm_name: "{{ vm_hostname }}"
+    size: "{{ vm_size }}"
+    comment: "{{ snow_request_item_number }}"
+
+# - name: Extract location from vm hostname and map to Nutanix cluster
+#   ansible.builtin.set_fact:
+#     clustername: >-
+#       {% set loc = vm_name[:3] | lower %}
+#       {% set support = vm_name[4] | lower %}
+      
+#       {# Logic for Jackson Data Center #}
+#       {% if loc == 'jdc' %}
+#         {% if support in ['p', 'a'] %}
+#           {{ cluster | selectattr('name', 'equalto', 'JDC04') | first }}
+#         {% else %}
+#           {{ cluster | selectattr('name', 'equalto', 'JDC03') | first }}
+#         {% endif %}
+        
+#       {# Logic for Little Rock Data Center #}
+#       {% elif loc in ['lrl', 'lit'] %}
+#         {% if support in ['p', 'a'] %}
+#           {{ cluster | selectattr('name', 'equalto', 'LRL04') | first }}
+#         {% else %}
+#           {{ cluster | selectattr('name', 'equalto', 'LRL03') | first }}
+#         {% endif %}
+#       {% endif %}
+
+- name: Determine Domain based on Hostname Location Code
+  ansible.builtin.set_fact:
+    domain: >-
+      {% set domain_loc = vm_name[:3] | lower %}
+      {% if domain_loc == 'jdc' %}
+        prod.entergy.com
+      {% elif domain_loc in ['lrl', 'lit'] %}
+        ar.entergy.com
+      {% else %}
+        unknown.domain 
+      {% endif %}
+      
+- name: Clean WhiteSpace from Domain
+  ansible.builtin.set_fact:
+    domain: "{{ domain | trim }}"
+
+- name: Set Cluster variables 
+  ansible.builtin.set_fact:
+    cluster_name: "{{ item.cluster_name }}"
+    nutanix_central: "{{ item.central }}"
+    storage_uuid: "{{ item.storage_uuid }}"
+    cluster_location: "{{ item.location }}"
+    host_group: "{{ item.hostgroup }}"
+    nutanix_ip: "{{ item.nutanix_ip }}"
+  loop: "{{ cluster }}"
+  when: clustername == item.name
+
+# 1. Lookup Cluster UUID by Name
+#    - Targets Prism Central to find the cluster's UUID based on its name.
+- name: Lookup Cluster UUID by Name
+  ansible.builtin.uri:
+    url: "https://{{ nutanix_central }}:9440/api/nutanix/v3/clusters/list"
+    method: POST
+    user: "{{ nutanix_username }}"
+    password: "{{ nutanix_password }}"
+    headers:
+      Content-Type: "application/json"
+    body_format: json
+    validate_certs: false
+    force_basic_auth: true
+    use_proxy: no
+    body:
+      filter: "name=={{ cluster_name }}"
+    status_code: [200]
+  register: cluster_lookup_result
+  delegate_to: localhost # Run this on the controller node
+  
+# 2. Set Cluster UUID
+#    - Extracts the UUID from the lookup result and combines it with the loop item.
+- name: Set Cluster UUID
+  ansible.builtin.set_fact:
+    cluster_uuid: "{{ cluster_lookup_result.json.entities[0].metadata.uuid }}"
+  when: cluster_lookup_result.json.entities | length > 0
+    
+# 3. Look up UUID for Network/Subnet Name
+#    - Targets Prism Central (or Element if nutanix_host is CVM) to find the subnet's UUID.
+- name: Look up UUID for Network/Subnet Name
+  ansible.builtin.uri:
+    url: "https://{{ nutanix_central }}:9440/api/nutanix/v3/subnets/list"
+    method: POST
+    user: "{{ nutanix_username }}"
+    password: "{{ nutanix_password }}"
+    validate_certs: false
+    force_basic_auth: true
+    status_code: 200
+    use_proxy: no
+    headers:
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      kind: subnet
+      filter: "name=={{ subnet }}" # Filter by the subnet name
+      # Limit results to 1 since names should be unique in the scope you are searching
+      length: 1
+  register: subnet_lookup_result
+  delegate_to: localhost # Run this on the controller node
+  
+# 4. Set Network UUID as Fact
+- name: Set Network UUID as Fact
+  ansible.builtin.set_fact:
+    # Safely extract the UUID from the first item found in the 'entities' list
+    subnet_uuid: "{{ subnet_lookup_result.json.entities[0].metadata.uuid }}"
+  when: subnet_lookup_result.json.entities | length > 0
+
+# 5. Display network UUID
+- name: Display network UUID
+  ansible.builtin.debug:
+    msg: "Network UUID: {{ subnet_uuid }}"
+
+# 6. Calculate and set integer facts for VM specs
+- name: Calculate and set integer facts for VM specs
+  ansible.builtin.set_fact:
+    vm_num_vcpus: "{{ tshirt_sizes[size].cpu | int }}"
+    vm_memory_mib: "{{ (tshirt_sizes[size].ram_gb * 1024) | int }}"
+    vm_disk_size_mib: "{{ (tshirt_sizes[size].storage_gb * 1024) | int }}"
+    vm_second_disk_mib: "{{ (tshirt_sizes[size].second_disk_gb * 1024) | int }}"
+
+# 7. Create VM on Nutanix via API
+- name: Create VM on Nutanix via API
+  ansible.builtin.uri:
+    url: "https://{{ nutanix_central }}:9440/api/nutanix/v3/vms"
+    method: POST
+    user: "{{ nutanix_username }}"
+    password: "{{ nutanix_password }}"
+    validate_certs: false
+    force_basic_auth: true
+    status_code: 202 # The v3 API returns 202 (Accepted) for asynchronous operations
+    headers:
+      Content-Type: "application/json"
+    body_format: json
+    use_proxy: no
+    body: "{{ lookup('template', 'vm_create_payload.j2') }}"
+  register: new_vm_check
+
+- name: Set fact for newly created VM UUID and Name
+  ansible.builtin.set_fact:
+    new_vm_uuid: "{{ new_vm_check.json.metadata.uuid }}"
+    new_vm_name: "{{ vm_name }}"
+    new_vm: {
+      "uuid": "{{ new_vm_check.json.metadata.uuid }}",
+      "name": "{{ vm_name }}"
+    }
+  # This 'when' condition ensures the facts are only set if the VM creation was initiated successfully.
+  # The uri module sets 'changed' to true if the status_code (202) is matched.
+
+- name: Wait for VM Creation Task to Complete
+  ansible.builtin.uri:
+  url: "https://{{ nutanix_central }}:9440/api/nutanix/v3/tasks/{{ new_vm_check.json.status.execution_context.task_uuid }}"     method: GET
+    user: "{{ nutanix_username }}"
+    password: "{{ nutanix_password }}"
+    validate_certs: false
+    force_basic_auth: true
+    status_code: 200
+    use_proxy: no
+  register: task_status
+  until: task_status.json.status == 'SUCCEEDED' or task_status.json.status == 'FAILED'
+  retries: 60  # Check for 5 minutes (60 retries * 5 seconds)
+  delay: 5     # Wait 5 seconds between checks
+  
+- name: Fail if VM creation task failed
+  ansible.builtin.fail:
+    msg: "VM creation task failed: {{ task_status.json.message_list | default('Unknown error') }}"
+  when: task_status.json.status == 'FAILED'
+
+- name: Get Final VM Details to retrieve MAC Address
+  ansible.builtin.uri:
+    # Use the VM UUID from the initial 202 response metadata
+    url: "https://{{ nutanix_central }}:9440/api/nutanix/v3/vms/{{ new_vm_uuid }}"
+    method: GET
+    user: "{{ nutanix_username }}"
+    password: "{{ nutanix_password }}"
+    validate_certs: false
+    force_basic_auth: true
+    status_code: 200
+    use_proxy: no
+  register: final_vm_details
