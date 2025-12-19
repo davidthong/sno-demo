@@ -1,0 +1,59 @@
+{
+  "api_version": "3.1.0",
+  "metadata": {
+    "kind": "Vm",
+    "name": "{{ vm_name }}"
+  },
+  "spec": {
+    "name": "{{ vm_name }}",
+    "description": "VM Provisioned by Ansible API Call",
+    "cluster_reference": {
+      "kind": "Cluster",
+      "uuid": "{{ cluster_uuid }}"
+    },
+    "num_vcpus_per_socket": 1,
+    "num_sockets": {{ vm_num_vcpus }},
+    "memory_size_mib": {{ vm_memory_mib }},
+    "power_state": "OFF",
+    "timezone": "UTC",
+    "resources": {
+      "nic_list": [
+        {
+          "nic_type": "NORMAL_NIC",
+          "subnet_reference": {
+            "kind": "Subnet",
+            "uuid": "{{ subnet_uuid }}"
+          },
+          "is_connected": true
+        }
+      ],
+      "disk_list": [
+        {
+          "device_properties": {
+            "device_type": "DISK",
+            "disk_address": {
+              "adapter_type": "SCSI"
+            }
+          },
+          "is_cdrom": false,
+          "is_connected": true,
+          "disk_size_mib": {{ vm_disk_size_mib }},
+          "storage_config": {
+            "storage_container_reference": {
+              "kind": "StorageContainer",
+              "uuid": "{{ storage_uuid }}"
+            }
+          }
+        }
+      ],
+      "boot_config": {
+        "boot_type": "UEFI",
+        "boot_device_order_list": [
+          "DISK",
+          "CDROM",
+          "NETWORK"
+        ]
+      }
+    }
+  }
+}

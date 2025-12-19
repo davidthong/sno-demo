@@ -1,5 +1,14 @@
 ---
-# tasks file for error_handling
+# - name: Delete VM from Nutanix (example)
+#   nutanix.nutanix.nutanix_vm:
+#        prism_hostname: "{{ nutanix_host }}"
+#        prism_username: "{{ nutanix_user }}"
+#        prism_password: "{{ nutanix_pass }}"
+#        validate_certs: false
+#        state: absent
+#        vm_name: "{{ vm_name }}"
+#   register: vm_delete_result
+#   ignore_errors: true
 
 - name: Delete VM from Nutanix (example)
   nutanix.nutanix.nutanix_vm:
@@ -12,20 +21,101 @@
   register: vm_delete_result
   ignore_errors: true
 
+- name: Look up VM UUID by Name
+  ansible.builtin.uri:
+    url: "https://{{ nutanix_host }}:9440/api/nutanix/v3/vms/list"
+    method: POST
+    user: "{{ nutanix_user }}"
+    password: "{{ nutanix_pass }}"
+    validate_certs: false
+    force_basic_auth: true
+    status_code: 200
+    headers:
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      kind: vm
+      filter: "vm_name=={{ vm_name }}"
+      length: 1
+  register: vm_lookup_result
+  delegate_to: localhost
+ 
+- name: Set VM UUID as Fact
+  ansible.builtin.set_fact:
+    vm_uuid: "{{ vm_lookup_result.json.entities[0].metadata.uuid }}"
+  when: vm_lookup_result.json.entities | length > 0
+
+- name: Display VM UUID
+  ansible.builtin.debug:
+    msg: "VM UUID: {{ vm_uuid }}"
+  
+- name: Delete VM from Nutanix via API
+  ansible.builtin.uri:
+    url: "https://{{ nutanix_host }}:9440/api/nutanix/v3/vms/{{ vm_uuid }}"
+    method: DELETE 
+    user: "{{ nutanix_user }}"
+    password: "{{ nutanix_pass }}"
+    validate_certs: false
+    force_basic_auth: true
+    status_code: [200, 202, 404] # Accept 200 (Success), 202 (Accepted/In-progress), or 404 (Already gone)
+  register: vm_delete_result
+  ignore_errors: true 
+  delegate_to: localhost
+  when: vm_uuid is defined
+  retries: 3           
+  delay: 30            
+  until: >             
+    vm_delete_result is succeeded or        
+    vm_delete_result.status == 404 or       
+    'The requested URL was not found' in vm_delete_result.content | default('')
+    
 - name: Log deletion result
   ansible.builtin.debug:
     msg: "VM deletion result: {{ vm_delete_result }}"
 
   # refer to : https://docs.ansible.com/ansible/latest/collections/infoblox/nios_modules/nios_fixed_address_module.html
+- name: Get Network CIDR (Subnet IP Range) from IP
+  ansible.builtin.uri:
+    url: "https://{{ infoblox_host }}/wapi/v2.12/ipv4address?ip_address={{ vm_ip }}&_return_fields=network"
+    method: GET
+    user: "{{ infoblox_username }}"
+    password: "{{ infoblox_password }}"
+    validate_certs: false
+    force_basic_auth: true
+    status_code: 200
+    headers:
+      Content-Type: "application/json"
+    use_proxy: no 
+  register: ip_lookup_result
+  delegate_to: localhost
+
+- name: Extract Subnet CIDR
+  ansible.builtin.set_fact:
+    subnet_cidr: "{{ ip_lookup_result.json[0].network }}"
+  when: ip_lookup_result.json | length > 0
+
+- name: Display Subnet CIDR
+  ansible.builtin.debug:
+    msg: "Found Subnet CIDR: {{ subnet_cidr }}"
+    
+# refer to : https://docs.ansible.com/ansible/latest/collections/infoblox/nios_modules/nios_fixed_address_module.html
 - name: Release IP address from Infoblox
   infoblox.nios_modules.nios_fixed_address:
     host: "{{ infoblox_host }}"
     username: "{{ infoblox_username }}"
     password: "{{ infoblox_password }}"
     network: "192.168.0.0/24"
+    network: "{{ subnet_cidr }}"
     ipaddr: "{{ vm_ip }}"
     state: absent
     validate_certs: false
   delegate_to: localhost
   register: release_result
 
+  retries: 3           
+  delay: 30            
+  until: release_result is succeeded
+  
+- name: Log release result
+  ansible.builtin.debug:
+    msg: "Release IP result: {{ release_result }}"
