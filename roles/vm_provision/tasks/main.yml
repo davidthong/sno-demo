@@ -1,19 +1,15 @@
-- name: Task 1 - Starting workflow
-  ansible.builtin.debug:
-    msg: "Stub task 1 executed — workflow started."
+- name: Create the VM
+  ansible.builtin.include_tasks: vm_provision_nutanix_create_vm.yml
+  
+- name: Join Satellite
+  ansible.builtin.include_tasks: vm_provision_nutanix_create_host_entry_satellite.yml
 
-- name: Task 2 - Join Satellite
-  ansible.builtin.debug:
-    msg: "Stub task 2 executed — Join Satellite."
+- name: ISO image and OS Build
+  ansible.builtin.include_tasks: vm_provision_nutanix_iso_os_build.yml
 
-- name: Task 3 - Install Nimsoft Agent
-  ansible.builtin.debug:
-    msg: "Stub task 3 executed — agents ."
+- name: Update Inventory in AAP
+  ansible.builtin.include_tasks: vm_provision_nutanix_update_inventory.yml
 
-- name: Task 4 - Install Splunk Agent
-  ansible.builtin.debug:
-    msg: "Stub task 4 executed — Install Splunk Agent."
+- name: Enable SSH and cleanup
+  ansible.builtin.include_tasks: vm_provision_nutanix_ssh_cleanup.yml
 
-- name: Task 5 - Apply CIS Hardening
-  ansible.builtin.debug:
-    msg: "Stub task 5 executed — Apply CIS Hardening."
