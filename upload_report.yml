@@ -46,7 +46,10 @@
       servicenow.itsm.attachment_upload:
         table_name: sc_req_item
         table_sys_id: "{{ ritm_sys_id }}"
-        path: "{{ report_file }}"
+        attachments:
+          - path: "{{ report_file }}"
+            name: "ansible_report.html"
+            type: "text/html"
       register: attachment_result
 
     - name: Show attachment result
