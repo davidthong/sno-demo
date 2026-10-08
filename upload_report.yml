@@ -1,0 +1,50 @@
+---
+- name: Generate HTML and attach to RITM
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    ritm_number: "RITM0010186"
+    report_file: "/tmp/ansible_report.html"
+
+  tasks:
+
+    - name: Generate HTML report
+      ansible.builtin.copy:
+        dest: "{{ report_file }}"
+        mode: "0644"
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Ansible Automation Report</title>
+          </head>
+          <body>
+            <h1>Ansible Automation Report</h1>
+            <p>Automation completed successfully.</p>
+          </body>
+          </html>
+
+    - name: Look up RITM
+      servicenow.itsm.api_info:
+        resource: sc_req_item
+        sysparm_query: "number={{ ritm_number }}"
+        sysparm_fields:
+          - sys_id
+          - number
+      register: ritm_lookup
+
+    - name: Set RITM sys_id
+      ansible.builtin.set_fact:
+        ritm_sys_id: "{{ ritm_lookup.records[0].sys_id }}"
+
+    - name: Upload HTML report to RITM
+      servicenow.itsm.attachment_upload:
+        table_name: sc_req_item
+        table_sys_id: "{{ ritm_sys_id }}"
+        path: "{{ report_file }}"
+      register: attachment_result
+
+    - name: Show attachment result
+      ansible.builtin.debug:
+        var: attachment_result
