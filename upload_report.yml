@@ -27,20 +27,20 @@
 
     - name: Look up RITM
       servicenow.itsm.api_info:
-         resource: sc_req_item
-         sysparm_query: "number={{ ritm_number }}"
-         columns:
-           - sys_id
-           - numbe r
+        resource: sc_req_item
+        sysparm_query: "number={{ ritm_number }}"
+        columns:
+          - sys_id
+          - number
       register: ritm_lookup
 
     - name: Show RITM lookup
       ansible.builtin.debug:
-         var: ritm_lookup
+        var: ritm_lookup
 
     - name: Set RITM sys_id
       ansible.builtin.set_fact:
-        ritm_sys_id: "{{ ritm_lookup.records[0].sys_id }}"
+        ritm_sys_id: "{{ ritm_lookup.record[0].sys_id }}"
 
     - name: Upload HTML report to RITM
       servicenow.itsm.attachment_upload:
